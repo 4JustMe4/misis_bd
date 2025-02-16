@@ -1,0 +1,161 @@
+import requests
+import os
+import xlrd
+import logging
+import json
+
+urls = [
+    'https://misis.ru/files/-/7d25c03a7104eef05c070497a0102925/140225_gi.xls',
+    'https://misis.ru/files/-/180708c8a2a7dd621a10142628cd321e/140225_ibmi.xls',
+#    'https://misis.ru/files/-/a68f9212d6db71b44115abddbfb5e71b/140225_ibo.xlsx', TODO: xls with bad format
+    'https://misis.ru/files/-/75da0398c2654e2a4a3bbba5f203935f/140225_ieu.xls',
+    'https://misis.ru/files/-/9e080c766c3e47bd62c1e0311dbad190/140225_ifki.xls',
+    'https://misis.ru/files/-/40ee7e88bcb71d176a4cd829f91b81c3/140225_ikn.xls',
+    'https://misis.ru/files/-/c57b93865ae04c54a92abf2b5335ab7e/140225_inm.xls',
+    'https://misis.ru/files/-/e5bc8211c013c17eab64e8071cce418a/140225_it.xls',
+    'https://misis.ru/files/-/8b077073a7c38f58d737451e79eb5fbd/140225_pish.xls',
+]
+
+local_filename = 'tmp.xls'
+
+DAYS = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
+DAY_WIDTH = 14
+
+Log = logging.Logger("parser")
+
+
+def getGroupWidth(sheet, startIdx):
+    idx = startIdx + 1
+    maxIdx = len(sheet.row(0))
+    while idx < maxIdx and sheet.cell_value(0, idx) == "":
+        idx += 1
+    return idx - startIdx
+
+
+def getDayWidth(sheet, startIdx, dayName):
+    idx = startIdx + 1
+    maxIdx = sheet.nrows
+    while idx < maxIdx and sheet.cell_value(idx, 0) == "":
+        idx += 1
+
+    if dayName == DAYS[-1]:
+        idx += 1
+    return idx - startIdx
+
+
+def parseLesson(sheet, dayName, lessonStart, subGroupStart):
+    forceIgnore = False
+    if dayName == DAYS[-1] and lessonStart + 1 == sheet.nrows:
+        forceIgnore = True
+
+    lesson = {
+        "upper": {
+            "subject": sheet.cell_value(lessonStart, subGroupStart),
+            "place": sheet.cell_value(lessonStart, subGroupStart + 1),
+        },
+        "lower": {
+            "subject": "" if forceIgnore else sheet.cell_value(lessonStart + 1, subGroupStart),
+            "place": "" if forceIgnore else sheet.cell_value(lessonStart + 1, subGroupStart + 1),
+        },
+    }
+    return lesson
+
+
+def parseDay(sheet, groupName, subGroupName, dayName, dayStart, subGroupStart):
+    day = {}
+    for lesson in range(0, DAY_WIDTH, 2):
+        day[str(lesson // 2 + 1)] = parseLesson(sheet, dayName, dayStart + lesson, subGroupStart)
+
+    return day
+
+
+def parseSubGroup(sheet, groupName, subGroupName, subGroupStart):
+    subGroup = {}
+    dayStart = 2
+    for day in DAYS:
+        dayName = sheet.cell_value(dayStart, 0)
+        if day != dayName:
+            Log.warning(f"Bad day. Sheet: {sheet.name}, Group: {groupName}-{subGroupName}. Expected {day} at (0, {dayStart}), recieved {dayName}")
+            continue
+
+        dayWidth = getDayWidth(sheet, dayStart, dayName)
+        if dayWidth != DAY_WIDTH:
+            Log.warning(f"Bad day line. Sheet: {sheet.name}, Group: {groupName}-{subGroupName}, Day: {dayName}. Expected {DAY_WIDTH} line, recieved {dayWidth}")
+            continue
+
+        subGroup[day] = parseDay(sheet, groupName, subGroupName, dayName, dayStart, subGroupStart)
+        dayStart += dayWidth
+
+    return subGroup
+
+
+def parseGroup(sheet, groupName, groupStart, width):
+    Log.info(f'Process sheet {sheet.name}, group {groupName}')
+    group = {}
+    for subGroup in range(0, width, 2):
+        group[str(subGroup // 2 + 1)] = parseSubGroup(sheet, groupName, subGroup, groupStart + subGroup)
+    return group
+
+
+def parseSheet(sheet):
+    # TODO: support maga in gi
+    head_cells = {
+        (0, 0): 'Дата',
+        (0, 1): 'Номер',
+        (0, 2): 'Время',
+    }
+    for idx, value in head_cells.items():
+        if sheet.cell_value(idx[0], idx[1]) != value:
+            Log.error(f"Bad sheet {sheet.name}. Expected {value} in {idx}")
+            return None
+    
+    schedule = {}
+    maxGroupStart = len(sheet.row(0))
+    groupStart = 3
+    while groupStart < maxGroupStart:
+        groupWidth = getGroupWidth(sheet, groupStart)
+        groupName = sheet.cell_value(0, groupStart)
+        if not groupName:
+            Log.warning(f"Bad column. Sheet: {sheet.name}. Expected group number at (0, {groupStart}), recieved {groupName}")
+            continue
+
+        schedule[groupName] = parseGroup(sheet, groupName, groupStart, groupWidth)
+        groupStart += groupWidth
+
+    return schedule
+            
+
+def download_file(url, filename):
+    Log.warning(f"Process url {url}")
+    response = requests.get(url)
+    if response.status_code == 200:
+        with open(filename, 'wb') as f:
+            f.write(response.content)
+
+        workbook = xlrd.open_workbook(local_filename)
+        schedule = {}
+        for sheet_index in range(workbook.nsheets):
+            sheet = workbook.sheet_by_index(sheet_index)
+            Log.info(F"Parsing shedule from {sheet.name}")
+            new_schedule = parseSheet(sheet)
+            if new_schedule:
+                schedule |= new_schedule
+            else:
+                Log.warning(f"Can't parse shedule from {sheet.name}")
+
+        if 'ББИ-24-1' in schedule:
+            print(json.dumps(schedule["ББИ-24-1"]["1"], indent=2, ensure_ascii=False))
+
+        # Итерация по строкам и столбцам для получения данных
+        for row_idx in range(sheet.nrows):
+            row = sheet.row(row_idx)
+            row_data = [int(bool(cell.value)) for cell in row]
+            # print("".join(map(str, row_data)))
+            # print(len(row_data))
+        # print(f"Файл успешно скачан и сохранен как {filename}")
+    else:
+        print(f"Не удалось скачать файл. Код статуса: {response.status_code}")
+
+
+for url in urls:
+    download_file(url, local_filename)
