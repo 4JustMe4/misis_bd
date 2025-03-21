@@ -133,23 +133,22 @@ def download_file(url, filename):
             else:
                 Log.warning(f"Can't parse shedule from {sheet.name}")
 
-        if 'ББИ-24-1' in schedule:
-            print(json.dumps(schedule["ББИ-24-1"]["1"], indent=2, ensure_ascii=False))
+        # if 'ББИ-24-1' in schedule:
+        #     print(json.dumps(schedule["ББИ-24-1"]["1"], indent=2, ensure_ascii=False))
 
-        # Итерация по строкам и столбцам для получения данных
-        for row_idx in range(sheet.nrows):
-            row = sheet.row(row_idx)
-            row_data = [int(bool(cell.value)) for cell in row]
-            # print("".join(map(str, row_data)))
-            # print(len(row_data))
-        # print(f"Файл успешно скачан и сохранен как {filename}")
     else:
-        print(f"Не удалось скачать файл. Код статуса: {response.status_code}")
+        Log.error(f"Не удалось скачать файл. Код статуса: {response.status_code}")
+
+    return schedule
 
 
 if __name__ == "__main__":
+    schedule = {}
     for url in getNewUrl():
         if url.endswith('.xlsx'):
             Log.warning(f'Ignore .xlxs: {url}')
             continue
-        download_file(url, local_filename)
+        schedule |= download_file(url, local_filename)
+
+    with open('schedule.json', 'w') as f:
+        json.dump(schedule, f, indent=2, ensure_ascii=False)
