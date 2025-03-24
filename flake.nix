@@ -40,10 +40,10 @@
         aiogram
       ]));
 
-      redisImageCustom = (pkgs: with pkgs; dockerTools.buildImage {
-        name = "redis";
+      botImage = (pkgs: with pkgs; dockerTools.buildImage {
+        name = "customBotName";
         tag = "latest";
-
+        compressor = "none"; # "gz", "zstd".
         fromImage = null;
         fromImageName = null;
         fromImageTag = "latest";
@@ -51,18 +51,15 @@
         copyToRoot = pkgs.buildEnv {
           name = "image-root";
           paths = with pkgs; [
-            redis
+            (pythonEnv pkgs) 
+            #bash # not-cached
+            #fish
           ];
           pathsToLink = [ "/bin" ];
         };
 
-        runAsRoot = ''
-          #!${pkgs.runtimeShell}
-          mkdir -p /data
-        '';
-
         config = {
-          Cmd = [ "/bin/redis-server" ];
+          Cmd = [ "/bin/python3" ];
           WorkingDir = "/data";
           Volumes = { "/data" = { }; };
         };
@@ -71,12 +68,14 @@
         buildVMMemorySize = 512;
       });
 
-  in {
+
+  in rec {
     overlays.default = final: prev: rec {
       system = final.stdenv.hostPlatform.system;
-      redisDockerImage = redisImageOfficial prev;
+      redisDockerImage    = redisImageOfficial prev;
       postgresDockerImage = postgresImageOfficial prev;
-      pythonEnvironment = prev.callPackage pythonEnv {};
+      botPythonEnvironment= prev.callPackage pythonEnv {};
+      botDockerImage      = botImage prev;
       #package1 = with inputs.nixpkgs.legacyPackages.${system}; hello;
       #package1 = prev.hello;
     };
@@ -87,9 +86,31 @@
     in rec {
       redis = pkgs.redisDockerImage;
       postgres = pkgs.postgresDockerImage;
+      bot = pkgs.botDockerImage;
+      composed = pkgs.stdenv.mkDerivation {
+        name = "docker-compose-bundle";
+        #src = self;
+        src = pkgs.lib.fileset.toSource {
+          root = ./.; #builtins.toPath self;
+          fileset = pkgs.lib.fileset.unions [
+            ./compose.yaml
+          ];
+        };
+        phases = [ "unpackPhase" "installPhase" ];
+        installPhase = ''
+          mkdir -p $out
+          cp -T ${redis} $out/${redis.name}
+          cp -T ${postgres} $out/${postgres.name}
+          cp -T ${bot} $out/${bot.name}
+          cp -r $src/compose.yaml $out/
+        '';
 
+        meta = {
+          description = "Docker compose bundle with images";
+          platforms = pkgs.lib.platforms.all;
+        };
+      };
     });
-
 
     devShells = forAllSystems (system: let
       pkgs = importNixpkgs system;
@@ -97,27 +118,14 @@
         # load external libraries that you need in your rust project here
       ];
     in rec {
-        default =
-          let
-            helpers = with pkgs; [ direnv jq ];
-          in
-          pkgs.mkShell {
-            buildInputs = [
-            ];
-            packages = helpers ++ (with pkgs; [
-              #rust-analyzer
-              #rust-bindgen
-              #rustfmt
-              #rustToolchainStable # cargo, etc.
-              #cargo-edit # cargo add, cargo rm, etc.
-              #tree # for visualizing results
-              #evcxr
-            ]);
-
-            #RUSTFLAGS = [
-            #  "-Awarnings"
-            #];
-          };
+      default = let
+        helpers = with pkgs; [ direnv jq docker-compose ];
+      in pkgs.mkShell {
+        buildInputs = [
+        ];
+        packages = helpers ++ (with pkgs; [
+        ]);
+      };
     });
   };
 }
