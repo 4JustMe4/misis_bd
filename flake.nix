@@ -124,6 +124,7 @@
         buildInputs = [
         ];
         packages = helpers ++ (with pkgs; [
+            (pythonEnv pkgs)
         ]);
       };
     });
