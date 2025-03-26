@@ -6,8 +6,6 @@ import json
 
 from get_urls import getNewUrl
 
-local_filename = 'tmp.xls'
-
 DAYS = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
 DAY_WIDTH = 14
 
@@ -115,14 +113,15 @@ def parseSheet(sheet):
     return schedule
             
 
-def downloadFile(url, filename):
+def downloadFile(url):
     Log.warning(f"Process url {url}")
     response = requests.get(url)
     if response.status_code == 200:
-        with open(filename, 'wb') as f:
+        filename = 'tmp.xls'
+        with open('tmp.xls', 'wb') as f:
             f.write(response.content)
 
-        workbook = xlrd.open_workbook(local_filename)
+        workbook = xlrd.open_workbook(filename)
         schedule = {}
         for sheet_index in range(workbook.nsheets):
             sheet = workbook.sheet_by_index(sheet_index)
@@ -146,18 +145,30 @@ def updLocation(byLocation, group, subGroup, day, lesson, type, location, subjec
         return
     if not location in byLocation:
         byLocation[location] = {}
-    if not day in byLocation[location]:
-        byLocation[location][day] = {}
-    if not lesson in byLocation[location][day]:
-        byLocation[location][day][lesson] = {}
-    if not type in byLocation[location][day][lesson]:
-        byLocation[location][day][lesson][type] = { "subjects": {}}
-    if not subject in byLocation[location][day][lesson][type]["subjects"]:
-        byLocation[location][day][lesson][type]["subjects"][subject] = {"groups": {}}
-    if not group in byLocation[location][day][lesson][type]["subjects"][subject]["groups"]:
-        byLocation[location][day][lesson][type]["subjects"][subject]["groups"][group] = {"subGroups" : [] }
-    if not subGroup in byLocation[location][day][lesson][type]["subjects"][subject]["groups"][group]["subGroups"]:
-        byLocation[location][day][lesson][type]["subjects"][subject]["groups"][group]["subGroups"].append(subGroup)
+
+    curLocation = byLocation[location]
+    if not day in curLocation:
+        curLocation[day] = {}
+
+    curDay = curLocation[day]
+    if not lesson in curDay:
+        curDay[lesson] = {}
+
+    curLesson = curDay[lesson]
+    if not type in curLesson:
+        curLesson[type] = { "subjects": {}}
+
+    curType = curLesson[type]
+    if not subject in curType["subjects"]:
+        curType["subjects"][subject] = {"groups": {}}
+
+    curSubject = curType["subjects"][subject]
+    if not group in curSubject["groups"]:
+        curSubject[group] = {"subGroups" : [] }
+
+    curGroup = curSubject[group]
+    if not subGroup in curGroup["subGroups"]:
+        curGroup["subGroups"].append(subGroup)
 
 
 def buildByLocation(byGroupe):
@@ -179,9 +190,9 @@ if __name__ == "__main__":
         if url.endswith('.xlsx'):
             Log.warning(f'Ignore .xlxs: {url}')
             continue
-        schedule |= downloadFile(url, local_filename)
+        schedule |= downloadFile(url)
 
-    with open('schedule.json', 'w') as f:
+    with open('group.json', 'w') as f:
         json.dump(schedule, f, indent=2, ensure_ascii=False)
 
     byLocation = buildByLocation(schedule)
