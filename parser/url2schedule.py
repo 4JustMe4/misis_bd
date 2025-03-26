@@ -115,7 +115,7 @@ def parseSheet(sheet):
     return schedule
             
 
-def download_file(url, filename):
+def downloadFile(url, filename):
     Log.warning(f"Process url {url}")
     response = requests.get(url)
     if response.status_code == 200:
@@ -141,6 +141,37 @@ def download_file(url, filename):
 
     return schedule
 
+def updLocation(byLocation, group, subGroup, day, lesson, type, location, subject):
+    if location == "":
+        return
+    if not location in byLocation:
+        byLocation[location] = {}
+    if not day in byLocation[location]:
+        byLocation[location][day] = {}
+    if not lesson in byLocation[location][day]:
+        byLocation[location][day][lesson] = {}
+    if not type in byLocation[location][day][lesson]:
+        byLocation[location][day][lesson][type] = { "subjects": {}}
+    if not subject in byLocation[location][day][lesson][type]["subjects"]:
+        byLocation[location][day][lesson][type]["subjects"][subject] = {"groups": {}}
+    if not group in byLocation[location][day][lesson][type]["subjects"][subject]["groups"]:
+        byLocation[location][day][lesson][type]["subjects"][subject]["groups"][group] = {"subGroups" : [] }
+    if not subGroup in byLocation[location][day][lesson][type]["subjects"][subject]["groups"][group]["subGroups"]:
+        byLocation[location][day][lesson][type]["subjects"][subject]["groups"][group]["subGroups"].append(subGroup)
+
+
+def buildByLocation(byGroupe):
+    byLocation = {}
+    for group, shedule in byGroupe.items():
+        for subGroup, days in shedule.items():
+            for day, lessons in days.items():
+                for lesson, types in lessons.items():
+                    for type, content in types.items():
+                        location = content["place"]
+                        subject = content["subject"]
+                        updLocation(byLocation, group, subGroup, day, lesson, type, location, subject)
+    return byLocation
+
 
 if __name__ == "__main__":
     schedule = {}
@@ -148,7 +179,11 @@ if __name__ == "__main__":
         if url.endswith('.xlsx'):
             Log.warning(f'Ignore .xlxs: {url}')
             continue
-        schedule |= download_file(url, local_filename)
+        schedule |= downloadFile(url, local_filename)
 
     with open('schedule.json', 'w') as f:
         json.dump(schedule, f, indent=2, ensure_ascii=False)
+
+    byLocation = buildByLocation(schedule)
+    with open('location.json', 'w') as f:
+        json.dump(byLocation, f, indent=2, ensure_ascii=False)
