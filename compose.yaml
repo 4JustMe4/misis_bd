@@ -1,38 +1,84 @@
-services:
-  frontend:
-    image: example/webapp
-    ports:
-      - "443:8043"
-    networks:
-      - front-tier
-      - back-tier
-    configs:
-      - httpd-config
-    secrets:
-      - server-certificate
 
-  backend:
-    image: example/database
+
+version: '3.8'
+
+services:
+  postgres:
+    # postgres:14.16-alpine3.20 for example
+    image: @postgres_imageid@
+    restart: always
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+      # POSTGRES_USER: myuser
+      # POSTGRES_PASSWORD
+      # POSTGRES_PASSWORD_FILE
     volumes:
-      - db-data:/etc/data
-    networks:
-      - back-tier
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    # redis:alpine3.21 for example
+    image: @redis_imageid@
+    restart: always
+    ports:
+      - "6379:6379"
+    env_file:
+      - .env
+
+  mongodb:
+    # mongo:noble for example
+    image: @mongo_imageid@
+    restart: always
+    ports:
+      - "27017:27017"
+    env_file:
+      - .env
+    volumes:
+      - mongodb_data:/data/db
 
 volumes:
-  db-data:
-    driver: flocker
-    driver_opts:
-      size: "10GiB"
+  postgres_data:
+  mongodb_data:
 
-configs:
-  httpd-config:
-    external: true
 
-secrets:
-  server-certificate:
-    external: true
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
 
-networks:
-  # The presence of these objects is sufficient to define them
-  front-tier: {}
-  back-tier: {}
+services:
+  postgres:
+    image: postgres:14-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
+#volumes:
+#  db:
+
+#networks:
+    # all services share the same network by default
+    # unless explicitly specified
+    #
+    #default: {}
+
+
+# .env file variables required
+# POSTGRES_USER
+# POSTGRES_PASSWORD
+# MONGO_INITDB_ROOT_USERNAME
+# MONGO_INITDB_ROOT_PASSWORD
+# REDIS_PASSWORD
+# BOT_TOKEN
