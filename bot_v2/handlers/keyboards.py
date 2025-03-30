@@ -17,13 +17,13 @@ def get_class_schedule_menu() -> ReplyKeyboardMarkup:
     buttons = [
         [KeyboardButton(text="Сегодня"), KeyboardButton(text="Завтра")],
         [KeyboardButton(text="Мое расписание")],
-        [KeyboardButton(text="Полное расписание")],
+        [KeyboardButton(text="Поиск расписания")],
         [KeyboardButton(text="Назад")]
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
 
-# --- Переход с "Полное расписание" ---
+# --- Переход с "Поиск расписания" ---
 def get_full_schedule_menu() -> InlineKeyboardMarkup:
     """Меню выбора типа расписания"""
     buttons = [

@@ -289,7 +289,7 @@ async def update_or_send_message(bot: Bot, message: Message, new_text: str, repl
 
 
 # Обработчик начала выбора
-@router.message(F.text == "Полное расписание")
+@router.message(F.text == "Поиск расписания")
 async def full_schedule_start(message: Message):
     """Начало выбора полного расписания"""
     user_selections[message.from_user.id] = {}

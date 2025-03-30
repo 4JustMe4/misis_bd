@@ -17,7 +17,7 @@ def get_class_schedule_menu() -> ReplyKeyboardMarkup:
     buttons = [
         [KeyboardButton(text="Сегодня")],
         [KeyboardButton(text="Мое расписание")],
-        [KeyboardButton(text="Полное расписание")],
+        [KeyboardButton(text="Поиск расписания")],
         [KeyboardButton(text="Назад")]
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)

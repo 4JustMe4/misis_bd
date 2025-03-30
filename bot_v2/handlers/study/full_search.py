@@ -26,9 +26,9 @@ router = Router()
 
 
 # Хэндлеры
-@router.message(F.text == "Полное расписание")
+@router.message(F.text == "Поиск расписания")
 async def full_schedule_start(message: Message):
-    #Первая функция, реагирующая на запрос 'Полное расписание'#
+    #Первая функция, реагирующая на запрос 'Поиск расписания'#
     await message.answer(
         "Выберите тип расписания:",
         reply_markup=get_full_schedule_menu()  # Показывает меню с 3 вариантами + назад
