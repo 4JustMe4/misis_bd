@@ -1,6 +1,12 @@
 
+#version: '3.8'
 
-version: '3.8'
+x-env-file: &env-file
+  env_file:
+    - path: ./defaults.env
+      required: true
+    - path: ./secrets.env
+      required: false
 
 services:
   postgres:
@@ -9,11 +15,9 @@ services:
     restart: always
     ports:
       - "5432:5432"
-    env_file:
-      - .env
-      # POSTGRES_USER: myuser
-      # POSTGRES_PASSWORD
-      # POSTGRES_PASSWORD_FILE
+    <<: *env-file
+    # POSTGRES_USER
+    # POSTGRES_PASSWORD
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -23,8 +27,8 @@ services:
     restart: always
     ports:
       - "6379:6379"
-    env_file:
-      - .env
+    <<: *env-file
+    # REDIS_PASSWORD
 
   mongodb:
     # mongo:noble for example
@@ -32,39 +36,22 @@ services:
     restart: always
     ports:
       - "27017:27017"
-    env_file:
-      - .env
+    <<: *env-file
+    # MONGO_INITDB_ROOT_USERNAME
+    # MONGO_INITDB_ROOT_PASSWORD
     volumes:
       - mongodb_data:/data/db
+
+  tgbot:
+    image: tgbot:latest
+    restart: always
+    <<: *env-file
+    # BOT_TOKEN
 
 volumes:
   postgres_data:
   mongodb_data:
 
-
-services:
-  postgres:
-    image: postgres:16-alpine
-    restart: always
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
-    secrets:
-      - db_password
-
-services:
-  postgres:
-    image: postgres:14-alpine
-    restart: always
-    environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: secret
-    ports:
-      - "5432:5432"
-    volumes:
-      - db:/var/lib/postgresql/data
 #volumes:
 #  db:
 

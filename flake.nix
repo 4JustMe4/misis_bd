@@ -3,7 +3,9 @@
 
   inputs = {
     # release-24.11 2411-250106 3f0a8ac25fb674611b98089ca3a5dd6480175751
-    nixpkgs.url = "github:nixos/nixpkgs/3f0a8ac25fb674611b98089ca3a5dd6480175751";
+    #nixpkgs.url = "github:nixos/nixpkgs/3f0a8ac25fb674611b98089ca3a5dd6480175751";
+    # release-24.11 2411-250330 419ea68a83290cfc41514d9474faa0e06b332346
+    nixpkgs.url = "github:nixos/nixpkgs/419ea68a83290cfc41514d9474faa0e06b332346";
   };
 
   outputs = { self, nixpkgs, ... }@inputs: let
@@ -69,33 +71,47 @@
         ]
       ));
 
-      botImage = ({ dockerTools, buildEnv, python312, ...}@pkgs: dockerTools.buildImage {
-        name = "customBotName";
-        tag = "latest";
-        compressor = "none"; # "gz", "zstd".
-        fromImage = null;
-        fromImageName = null;
-        fromImageTag = "latest";
+      pythonFiles = { stdenvNoCC, ... }: stdenvNoCC.mkDerivation {
+        name = "tcbot-files";
+        src = self;
+        installPhase = ''
+          mkdir -p $out
+          cp -r $src/bot_v2 $out/
+        '';
+      };
 
-        copyToRoot = buildEnv {
-          name = "image-root";
-          paths = [
-            (pythonEnv pkgs) 
-            #bash # not-cached
-            #fish
+      botImage = ({ stdenvNoCC, dockerTools, buildEnv, python312, ...}@pkgs: 
+        dockerTools.buildImage {
+          name = "tgbot";
+          tag = "latest";
+          compressor = "none"; # "gz", "zstd".
+          fromImage = null;
+          fromImageName = null;
+          fromImageTag = null;
+
+          copyToRoot = [
+            dockerTools.binSh
+            #dockerTools.usrBinEnv
+            (pythonFiles pkgs)
+            (buildEnv {
+              name = "image-root";
+              paths = [
+                (pythonEnv pkgs) 
+              ];
+              pathsToLink = [ "/bin" ];
+            })
           ];
-          pathsToLink = [ "/bin" ];
-        };
 
-        config = {
-          Cmd = [ "/bin/python3" ];
-          WorkingDir = "/data";
-          Volumes = { "/data" = { }; };
-        };
+          config = {
+            Cmd = [ "/bin/python3" "./main.py" ];
+            WorkingDir = "/bot_v2";
+            #Volumes = { "/data" = { }; };
+          };
 
-        diskSize = 1024;
-        buildVMMemorySize = 512;
-      });
+          diskSize = 1024;
+          buildVMMemorySize = 512;
+        }
+      );
 
 
     compresspkg = ({ stdenvNoCC, zstd, ... }: package: stdenvNoCC.mkDerivation {
@@ -148,18 +164,19 @@
       composed_nodb = pkgs.stdenvNoCC.mkDerivation {
         name = "docker-compose-bundle";
         #src = self;
-        src = compose_yaml;
-        #pkgs.lib.fileset.toSource {
-        #  root = ./.; #builtins.toPath self;
-        #  fileset = pkgs.lib.fileset.union [
-        #    ./compose.yaml
-        #  ];
-        #};
+        #src = compose_yaml;
+        src = pkgs.lib.fileset.toSource {
+          root = ./.; #builtins.toPath self;
+          fileset = pkgs.lib.fileset.unions [
+            ./defaults.env
+          ];
+        };
         phases = ["installPhase" ];
         installPhase = ''
           mkdir -p $out
           cp -T ${bot} $out/${bot.name}
-          cp -T $src $out/compose.yaml
+          cp -T ${compose_yaml} $out/compose.yaml
+          cp $src/defaults.env $out/
         '';
 
         meta = {
@@ -169,14 +186,10 @@
       };
       compressed      = (pkgs.callPackage compresspkg {}) composed;
       compressed_nodb = (pkgs.callPackage compresspkg {}) composed_nodb;
-
     });
 
     devShells = forAllSystems (system: let
       pkgs = importNixpkgs system;
-      libPath = with pkgs; lib.makeLibraryPath [
-        # load external libraries that you need in your rust project here
-      ];
     in rec {
       default = let
         helpers = with pkgs; [ direnv jq docker-compose ];
