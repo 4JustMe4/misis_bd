@@ -3,7 +3,8 @@ import logging
 from aiogram import F, Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import Message
-
+# проверка подключения к гиту
+# ну и еще
 from config import BOT_TOKEN
 from handlers.keyboards import get_main_menu, get_class_schedule_menu
 
