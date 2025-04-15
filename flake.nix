@@ -9,39 +9,49 @@
   };
 
   outputs = { self, nixpkgs, ... }@inputs: let
-      supportedSystems = [ "aarch64-darwin" "aarch64-linux" "x86_64-darwin" "x86_64-linux" ];
+      #supportedSystems = [ "aarch64-darwin" "aarch64-linux" "x86_64-darwin" "x86_64-linux" ];
+      supportedSystems = [ "x86_64-linux" ]; # only x86_64 is currently defined
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
       importNixpkgs = (system: import inputs.nixpkgs {
         inherit system;
         overlays = [ self.overlays.default ];
       });
 
+      alpineImageOfficial = ({ dockerTools, ... }: dockerTools.pullImage {
+        imageName = "alpine";
+        imageDigest ="sha256:1c4eef651f65e2f7daee7ee785882ac164b02b78fb74503052a26dc061c90474";
+        os = "linux";
+        arch = "x86_64";
+        finalImageName = "alpine";
+        finalImageTag = "3.21.3";
+        sha256 = "sha256-BLd0y9w1FIBJO5o4Nu5Wuv9dtGhgvh+gysULwnR9lOo=";
+      });
       redisImageOfficial = ({ dockerTools, ... }: dockerTools.pullImage {
         imageName = "redis";
         imageDigest ="sha256:519f0189dfdee3bc0bad61fb265fe73d864b5c64020e6579ad48a45c49965635";
         os = "linux";
         arch = "x86_64";
         finalImageName = "redis";
-        finalImageTag = "alpine3.21";
-        sha256 = "sha256-molkn5v2dNVElslcb6wkr9J0dT0Q024Ny7n+u79j6qA=";
+        finalImageTag = "7.4.2-alpine3.21";
+        sha256 = "sha256-OLdmIch4dPgLVnuVOdbljtWZyDKJszGA1T8OnjKhauc=";
       });
       postgresImageOfficial = ({ dockerTools, ... }: dockerTools.pullImage {
         imageName = "postgres";
-        imageDigest = "sha256:432de47662e8b0c9dc420487fa54c12cf0b789f424a8cb1504f20b196220b5cd";
+        imageDigest = "sha256:0ae695e3d11c7cc82cbed8f3e506233f18cdd40e3fc7622893f6a4d0772a5a09";
         os = "linux";
         arch = "x86_64";
         finalImageName = "postgres";
-        finalImageTag = "14.16-alpine3.20";
-        sha256 = "sha256-qTnAdADb3VF9fTqVaQO0b3uuqYsny2JZ9iCy1tqcMT4=";
+        finalImageTag = "17.4-alpine3.21";
+        sha256 = "sha256-S+MBad6gRuDxLIXqk1P8XJxJjdWWCQToMkGIOUq6g4Y=";
       });
       mongoImageOfficial = ({ dockerTools, ... }: dockerTools.pullImage {
         imageName = "mongo";
-        imageDigest = "sha256:0fbe569f105156a412dd7383afdc9d6a784c9acea1367663c384e5e98b2ecc2a";
+        imageDigest = "sha256:3633d9020777dbfe548792a7372a193560d1fecce9fd50892612420e85d601c3";
         os = "linux";
         arch = "x86_64";
         finalImageName = "mongo";
-        finalImageTag = "noble";
-        sha256 = "sha256-+veJG8vAXIp8huy6ifViQMM9SuB5On5G09r0Yer7knA=";
+        finalImageTag = "8.0.8-noble";
+        sha256 = "sha256-m/SDhK337rT92M/rZXu5FPylkORneqOpaSdq3ZwGgZg=";
       });
 
       pythonEnv = ({ python312, ... }: python312.withPackages (
@@ -72,24 +82,24 @@
       ));
 
       pythonFiles = { stdenvNoCC, ... }: stdenvNoCC.mkDerivation {
-        name = "tcbot-files";
+        name = "tgbot-files";
         src = self;
         installPhase = ''
           mkdir -p $out
-          cp -r $src/bot_v2 $out/
+          cp -Tr $src/bot_v3 $out/bot_srv
         '';
       };
 
-      botImage = ({ stdenvNoCC, dockerTools, buildEnv, python312, ...}@pkgs: 
-        dockerTools.buildImage {
+      botImage = ({ lib, stdenvNoCC, dockerTools, buildEnv, python312, ...}@pkgs: 
+        (dockerTools.buildLayeredImage {
           name = "tgbot";
+          #name = "tgbot";
           tag = "latest";
+          created = lib.substring 0 8 self.lastModifiedDate;
           compressor = "none"; # "gz", "zstd".
-          fromImage = null;
-          fromImageName = null;
-          fromImageTag = null;
 
-          copyToRoot = [
+          maxLayers = 16;
+          contents = [
             dockerTools.binSh
             #dockerTools.usrBinEnv
             (pythonFiles pkgs)
@@ -104,15 +114,16 @@
 
           config = {
             Cmd = [ "/bin/python3" "./main.py" ];
-            WorkingDir = "/bot_v2";
+            WorkingDir = "/bot_srv";
             #Volumes = { "/data" = { }; };
           };
 
-          diskSize = 1024;
-          buildVMMemorySize = 512;
-        }
+          #diskSize = 1024;
+          #buildVMMemorySize = 512;
+        }).overrideAttrs (a: a // {
+          name = "docker-image-${a.name}";
+        })
       );
-
 
     compresspkg = ({ stdenvNoCC, zstd, ... }: package: stdenvNoCC.mkDerivation {
       src = package; 
@@ -138,10 +149,11 @@
       pkgs = importNixpkgs system;
 
     in rec {
+      alpine    = pkgs.callPackage alpineImageOfficial {};
       redis     = pkgs.callPackage redisImageOfficial {};
       postgres  = pkgs.callPackage postgresImageOfficial {};
       mongo     = pkgs.callPackage mongoImageOfficial {};
-      bot = pkgs.callPackage botImage {};
+      tgbot = pkgs.callPackage botImage {};
       compose_yaml = pkgs.substituteAll {
         src = ./compose.yaml;
         env = let
@@ -149,13 +161,15 @@
           # for usual images we use <container>:<tag>@<digest>
           toURI = image: "${image.imageName}:${image.imageTag}@${image.imageDigest}";
         in { # @<name>@ -> ...
-          postgres_imageid  = toURI postgres;
+          alpine_imageid    = toURI alpine;
           redis_imageid     = toURI redis;
+          postgres_imageid  = toURI postgres;
           mongo_imageid     = toURI mongo;
         };
       };
       composed = composed_nodb.overrideAttrs (a: a // {
         installPhase = a.installPhase + ''
+          cp -T ${alpine} $out/${alpine.name}
           cp -T ${redis} $out/${redis.name}
           cp -T ${postgres} $out/${postgres.name}
           cp -T ${mongo} $out/${mongo.name}
@@ -174,7 +188,7 @@
         phases = ["installPhase" ];
         installPhase = ''
           mkdir -p $out
-          cp -T ${bot} $out/${bot.name}
+          cp -T ${tgbot} $out/${tgbot.name}
           cp -T ${compose_yaml} $out/compose.yaml
           cp $src/defaults.env $out/
         '';
