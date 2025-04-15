@@ -1,5 +1,5 @@
 
-#version: '3.8'
+name: tgbot
 
 x-env-file: &env-file
   env_file:
@@ -8,52 +8,105 @@ x-env-file: &env-file
     - path: ./secrets.env
       required: false
 
+x-healthcheck-params: &healthcheck-params
+  interval: 10s
+  timeout: 5s
+  retries: 3
+  start_period: 30s
+
 services:
+  redis:
+    # redis:7.4.2-alpine3.21 # for example
+    image: @redis_imageid@
+    restart: always
+    healthcheck:
+      test: redis-cli ping
+      <<: *healthcheck-params
+    #depends_on:
+    #  initscript:
+    #    condition: service_completed_successfully
+    ports:
+      - "6379:6379"
+    <<: *env-file
+    # REDIS_PASSWORD
+    #volumes:
+    #  - type: volume
+    #    source: data
+    #    target: /data
+    #    volume:
+    #      subpath: redis_data
+
   postgres:
-    # postgres:14.16-alpine3.20 for example
+    # postgres:17.4-alpine3.21 for example
     image: @postgres_imageid@
     restart: always
+    healthcheck:
+      test: pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
+      <<: *healthcheck-params
+    depends_on:
+      initscript:
+        condition: service_completed_successfully
     ports:
       - "5432:5432"
     <<: *env-file
     # POSTGRES_USER
     # POSTGRES_PASSWORD
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - type: volume
+        target: /var/lib/postgresql/data
+        source: data
+        volume:
+          subpath: postgres
 
-  redis:
-    # redis:alpine3.21 for example
-    image: @redis_imageid@
-    restart: always
-    ports:
-      - "6379:6379"
-    <<: *env-file
-    # REDIS_PASSWORD
-
-  mongodb:
-    # mongo:noble for example
+  mongo:
+    # mongo:8.0.8-noble for example
     image: @mongo_imageid@
     restart: always
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh mongo:27017/test --quiet
+      <<: *healthcheck-params
+    depends_on:
+      initscript:
+        condition: service_completed_successfully
     ports:
       - "27017:27017"
     <<: *env-file
     # MONGO_INITDB_ROOT_USERNAME
     # MONGO_INITDB_ROOT_PASSWORD
     volumes:
-      - mongodb_data:/data/db
+      - type: volume
+        source: data
+        target: /data/db
+        volume:
+          subpath: mongo
 
   tgbot:
+    # local image
     image: tgbot:latest
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+
     restart: always
     <<: *env-file
     # BOT_TOKEN
 
-volumes:
-  postgres_data:
-  mongodb_data:
 
-#volumes:
-#  db:
+  initscript:
+    # base alpine image
+    image: @alpine_imageid@
+    # workaround cause docker compose doesn't create them currently
+    command: |
+      mkdir -p /volume/postgres /volume/mongo
+    volumes:
+      - data:/volume
+
+volumes:
+  data:
 
 #networks:
     # all services share the same network by default
@@ -65,7 +118,11 @@ volumes:
 # .env file variables required
 # POSTGRES_USER
 # POSTGRES_PASSWORD
+# POSTGRES_DB
 # MONGO_INITDB_ROOT_USERNAME
 # MONGO_INITDB_ROOT_PASSWORD
 # REDIS_PASSWORD
 # BOT_TOKEN
+#
+# To pull the required services, run:
+# docker compose pull initscript redis postgres mongo
