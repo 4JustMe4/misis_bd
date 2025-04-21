@@ -223,22 +223,3 @@ def iterThrow(byGroupe, func):
                         func(result, group, subGroup, day, lesson, type, location, subject)
     return result
 
-
-if __name__ == "__main__":
-    schedule = {}
-    for url in getNewUrl():
-        if url.endswith('.xlsx'):
-            Log.warning(f'Ignore .xlxs: {url}')
-            continue
-        schedule |= downloadFile(url)
-
-    with open('group.json', 'w') as f:
-        json.dump(schedule, f, indent=2, ensure_ascii=False, sort_keys=True)
-
-    byLocation = iterThrow(schedule, updLocation)
-    with open('location.json', 'w') as f:
-        json.dump(byLocation, f, indent=2, ensure_ascii=False, sort_keys=True)
-
-    byTeacher = iterThrow(schedule, updTeacher)
-    with open('teacher.json', 'w') as f:
-        json.dump(byTeacher, f, indent=2, ensure_ascii=False, sort_keys=True)
