@@ -14,10 +14,11 @@ def processFile(file, sheetFunc):
         sheet = workbook.sheet_by_index(sheet_index)
         UtilsLog.info(F"Parsing shedule from {sheet.name}")
         new_result = sheetFunc(sheet)
-        if new_schedule:
+        if new_result:
             result |= new_result
         else:
             UtilsLog.warning(f"Can't parse shedule from {sheet.name}")
+    return result
 
 
 def processUrl(url, sheetFunc):

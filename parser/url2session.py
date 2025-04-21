@@ -2,8 +2,7 @@ import logging
 
 from utils import processFile
 
-DAYS = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
-DAY_WIDTH = 14
+DAY_WIDTH = 2
 Url2sessionLog = logging.Logger("url2session")
 
 
@@ -15,59 +14,61 @@ def getGroupWidth(sheet, startIdx):
     return idx - startIdx
 
 
-def getDayWidth(sheet, startIdx, dayName):
+def getDayWidth(sheet, startIdx):
     idx = startIdx + 1
     maxIdx = sheet.nrows
     while idx < maxIdx and sheet.cell_value(idx, 0) == "":
         idx += 1
 
-    if dayName == DAYS[-1]:
-        idx += 1
     return idx - startIdx
 
 
-def parseLesson(sheet, dayName, lessonStart, subGroupStart):
-    forceIgnore = False
-    if dayName == DAYS[-1] and lessonStart + 1 == sheet.nrows:
-        forceIgnore = True
+def parseExam(sheet, date, examStart, subGroupStart):
+    # forceIgnore = False
+    # if examStart + 1 == sheet.nrows:
+    #     forceIgnore = True
 
-    lesson = {
-        "upper": {
-            "subject": sheet.cell_value(lessonStart, subGroupStart),
-            "place": sheet.cell_value(lessonStart, subGroupStart + 1),
-        },
-        "lower": {
-            "subject": "" if forceIgnore else sheet.cell_value(lessonStart + 1, subGroupStart),
-            "place": "" if forceIgnore else sheet.cell_value(lessonStart + 1, subGroupStart + 1),
-        },
+    exam = {
+        "subject": sheet.cell_value(examStart, subGroupStart),
+        "place": sheet.cell_value(examStart, subGroupStart + 1),
     }
-    return lesson
+    return exam
 
 
-def parseDay(sheet, groupName, subGroupName, dayName, dayStart, subGroupStart):
+def parseDay(sheet, groupName, subGroupName, date, dayStart, subGroupStart):
     day = {}
-    for lesson in range(0, DAY_WIDTH, 2):
-        day[str(lesson // 2 + 1)] = parseLesson(sheet, dayName, dayStart + lesson, subGroupStart)
+    for exam in range(0, DAY_WIDTH):
+        day[exam + 1] = parseExam(sheet, date, dayStart + exam, subGroupStart)
 
     return day
 
 
+def verifyDate(date):
+    dotsPos = {2, 5}
+    for i in range(len(date)):
+        if i in dotsPos:
+            if date[i] != '.':
+                return False
+        else:
+            if date[i] < '0' or '9' < date[i]:
+                return False
+    return True
+
+
 def parseSubGroup(sheet, groupName, subGroupName, subGroupStart):
     subGroup = {}
-    dayStart = 2
-    for day in range(2, sheet.nrows):
+    for dayStart in range(2, sheet.nrows, DAY_WIDTH):
         date = sheet.cell_value(dayStart, 0).split('\n')[0]
-        if day != dayName:
-            Url2sessionLog.warning(f"Bad day. Sheet: {sheet.name}, Group: {groupName}-{subGroupName}. Expected {day} at (0, {dayStart}), recieved {dayName}")
+        if not verifyDate(date):
+            Url2sessionLog.warning(f"Bad day. Sheet: {sheet.name}, Group: {groupName}-{subGroupName}. Expected dateline object at (0, {dayStart}), recieved {date}")
             continue
 
-        dayWidth = getDayWidth(sheet, dayStart, dayName)
+        dayWidth = getDayWidth(sheet, dayStart)
         if dayWidth != DAY_WIDTH:
-            Url2sessionLog.warning(f"Bad day line. Sheet: {sheet.name}, Group: {groupName}-{subGroupName}, Day: {dayName}. Expected {DAY_WIDTH} line, recieved {dayWidth}")
+            Url2sessionLog.warning(f"Bad day line. Sheet: {sheet.name}, Group: {groupName}-{subGroupName}, date: {date}. Expected {DAY_WIDTH} line, recieved {dayWidth}")
             continue
 
-        subGroup[day] = parseDay(sheet, groupName, subGroupName, dayName, dayStart, subGroupStart)
-        dayStart += dayWidth
+        subGroup[date] = parseDay(sheet, groupName, subGroupName, date, dayStart, subGroupStart)
 
     return subGroup
 
