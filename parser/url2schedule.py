@@ -141,36 +141,6 @@ def downloadFile(url):
     return schedule
 
 
-def updLocation(byLocation, group, subGroup, day, lesson, type, location, subject):
-    if location == "":
-        return
-    if not location in byLocation:
-        byLocation[location] = {}
-
-    curLocation = byLocation[location]
-    if not day in curLocation:
-        curLocation[day] = {}
-
-    curDay = curLocation[day]
-    if not lesson in curDay:
-        curDay[lesson] = {}
-
-    curLesson = curDay[lesson]
-    if not type in curLesson:
-        curLesson[type] = { "subjects": {}}
-
-    curType = curLesson[type]
-    if not subject in curType["subjects"]:
-        curType["subjects"][subject] = {"groups": {}}
-
-    curSubject = curType["subjects"][subject]
-    if not group in curSubject["groups"]:
-        curSubject["groups"][group] = {"subGroups" : [] }
-
-    curGroup = curSubject["groups"][group]
-    if not subGroup in curGroup["subGroups"]:
-        curGroup["subGroups"].append(subGroup)
-
 def updTeacher(byTeacher, group, subGroup, day, lesson, type, location, subject):
     if not '\n' in subject:
         return
@@ -209,17 +179,4 @@ def updTeacher(byTeacher, group, subGroup, day, lesson, type, location, subject)
 
     if location not in curSubject["locations"]:
         curSubject["locations"].append(location)
-
-
-def iterThrow(byGroupe, func):
-    result = {}
-    for group, shedule in byGroupe.items():
-        for subGroup, days in shedule.items():
-            for day, lessons in days.items():
-                for lesson, types in lessons.items():
-                    for type, content in types.items():
-                        location = content["place"]
-                        subject = content["subject"]
-                        func(result, group, subGroup, day, lesson, type, location, subject)
-    return result
 
