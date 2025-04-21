@@ -5,7 +5,7 @@ from url2schedule import url2schedule
 from url2session import url2session
 from schedule2location import schedule2location
 from schedule2teacher import schedule2teacher
-from get_urls import getNewUrl
+from get_urls import getNewSheduleUrls, getNewSessionUrls
 
 Log = logging.Logger("updater")
 
