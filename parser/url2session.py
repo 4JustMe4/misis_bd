@@ -109,4 +109,4 @@ def parseSheet(sheet):
 
 
 def url2session(url):
-    return processFile(url, parseSheet)
+    return processUrl(url, parseSheet)

@@ -4,32 +4,43 @@ import logging
 from bs4 import BeautifulSoup
 
 MISIS_SCHEDULE = 'https://misis.ru/students/schedule/'
+MISIS_SESSION = 'https://misis.ru/students/session/'
 FILES_PREFIX = 'https://misis.ru'
 
 UrlLog = logging.Logger('url_updater')
 
-def getNewUrl():
-    UrlLog.warning(f'Reupdate url lists from {MISIS_SCHEDULE}')
-    sheduleLinks = []
-    response = requests.get(MISIS_SCHEDULE)
+
+def getAllLinks(url):
+    UrlLog.warning(f'Processing url: {url}')
+    response = requests.get(url)
+    links = []
     if response.status_code == 200:
         soup = BeautifulSoup(response.content, 'html.parser')
         rawLinks = [a.get('href') for a in soup.find_all('a')]
         for link in rawLinks:
             if link:
                 if link.startswith('/files/-/'):
-                    sheduleLinks.append(FILES_PREFIX + link)
+                    links.append(FILES_PREFIX + link)
                 else:
                     UrlLog.info(f'Ignore {link}')
     else:
         UrlLog.error(f'Request to {MISIS_SCHEDULE} was failed: {response.status_code}')
+    UrlLog.info(f'The result is: {links}')
+    return links
 
-    UrlLog.warning(f"Result is {sheduleLinks}")
-    return sheduleLinks
+
+def getNewSheduleUrls():
+    UrlLog.warning(f'Reupdate url lists for {MISIS_SCHEDULE}')
+    return getAllLinks(MISIS_SCHEDULE)
+
+def getNewSessionUrls():
+    UrlLog.warning(f'Reupdate url lists for {MISIS_SESSION}')
+    return getAllLinks(MISIS_SESSION)
 
 
 if __name__ == "__main__":
-    print(getNewUrl())
+    print(f'Schedule: {getNewSheduleUrls()}')
+    print(f'Session: {getNewSessionUrls()}')
 
 # backuped links
 # urls = [
