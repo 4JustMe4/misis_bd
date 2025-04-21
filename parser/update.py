@@ -1,13 +1,29 @@
-import logging
 import json
+import logging
+import os
 
-from url2schedule import url2schedule
-from url2session import url2session
+from get_urls import getNewSheduleUrls, getNewSessionUrls
 from schedule2location import schedule2location
 from schedule2teacher import schedule2teacher
-from get_urls import getNewSheduleUrls, getNewSessionUrls
+from url2schedule import url2schedule
+from url2session import url2session
+
 
 Log = logging.Logger("updater")
+
+
+def writeJson(data, name):
+    with open(name + '.json', 'w') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False, sort_keys=True)
+
+
+def dumpResults(schedule, session, location, teacher):
+    os.chdir('data')
+    writeJson(schedule, 'group')
+    writeJson(session, 'session')
+    writeJson(location, 'location')
+    writeJson(teacher, 'teacher')
+
 
 if __name__ == "__main__":
     Log.info('Start json updating')
@@ -24,16 +40,8 @@ if __name__ == "__main__":
             Log.warning(f'Ignore .xlxs: {url}')
             continue
         session |= url2session(url)
-    with open('session.json', 'w') as f:
-        json.dump(session, f, indent=2, ensure_ascii=False, sort_keys=True)
-
-    with open('group.json', 'w') as f:
-        json.dump(schedule, f, indent=2, ensure_ascii=False, sort_keys=True)
 
     byLocation = schedule2location(schedule)
-    with open('location.json', 'w') as f:
-        json.dump(byLocation, f, indent=2, ensure_ascii=False, sort_keys=True)
-
     byTeacher = schedule2teacher(schedule)
-    with open('teacher.json', 'w') as f:
-        json.dump(byTeacher, f, indent=2, ensure_ascii=False, sort_keys=True)
+
+    dumpResults(schedule, session, byLocation, byTeacher)
