@@ -1,5 +1,6 @@
 from utils import iterThrow
 
+
 def updLocation(byLocation, group, subGroup, day, lesson, type, location, subject):
     if location == "":
         return
@@ -29,6 +30,7 @@ def updLocation(byLocation, group, subGroup, day, lesson, type, location, subjec
     curGroup = curSubject["groups"][group]
     if not subGroup in curGroup["subGroups"]:
         curGroup["subGroups"].append(subGroup)
+
 
 def schedule2location(schedule):
     return iterThrow(schedule, updLocation)
