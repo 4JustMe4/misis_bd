@@ -1,6 +1,7 @@
 import logging
 
 from url2schedule import url2schedule
+from url2session import url2session
 from schedule2location import schedule2location
 from schedule2teacher import schedule2teacher
 from get_urls import getNewUrl
@@ -8,6 +9,7 @@ from get_urls import getNewUrl
 Log = logging.Logger("updater")
 
 if __name__ == "__main__":
+    url2session('ikn-210425e.xls')
     Log.info('Start json updating')
     schedule = {}
     for url in getNewUrl():
