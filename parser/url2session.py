@@ -1,6 +1,6 @@
 import logging
 
-from utils import processFile
+from utils import processUrl
 
 DAY_WIDTH = 2
 Url2sessionLog = logging.Logger("url2session")

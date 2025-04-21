@@ -7,7 +7,7 @@ UtilsLog = logging.Logger("utils")
 
 
 def processFile(file, sheetFunc):
-    UtilsLog.warning(f"Process file {file}")
+    UtilsLog.info(f"Process file {file}")
     workbook = xlrd.open_workbook(file)
     result = {}
     for sheet_index in range(workbook.nsheets):
