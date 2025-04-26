@@ -94,11 +94,13 @@
         lastModifyDate = lib.substring 0 8 self.lastModifiedDate;
         lastModifyTime = lib.substring 8 14 self.lastModifiedDate;
         tagPart2 = lib.substring 0 8 (self.rev or lastModifyTime);
+        imageName = "tgbot";
+        # YYYYMMDD-<commit-part> or YYYYMMDD-hhmmss
+        imageTag = "${lastModifyDate}-${tagPart2}"; 
       in (dockerTools.buildLayeredImage {
-          name = "tgbot";
+          name = imageName;
           # if unset, tag by default refers to the nix input content hash
-          # YYYYMMDD-<commit-part> or YYYYMMDD-hhmmss
-          tag = "${lastModifyDate}-${tagPart2}";
+          tag = imageTag;
           created = lastModifyDate; # YYYYMMDD
           compressor = "none"; # "gz", "zstd".
 
@@ -125,7 +127,7 @@
           #diskSize = 1024;
           #buildVMMemorySize = 512;
         }).overrideAttrs (a: a // {
-          name = "docker-image-${a.name}";
+          name = "docker-image-${imageName}-${imageTag}.tar";
         })
       );
 
