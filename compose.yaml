@@ -82,7 +82,7 @@ services:
 
   tgbot:
     # local image
-    image: tgbot:latest
+    image: @tgbot_imageid@
     depends_on:
       redis:
         condition: service_healthy
@@ -126,3 +126,9 @@ volumes:
 #
 # To pull the required services, run:
 # docker compose pull initscript redis postgres mongo
+#
+# To run docker-compose bundles for production
+# PROFILE=prod sudo docker compose ...
+#
+# To run docker-compose bundles for testing
+# PROFILE=prod sudo docker compose ...

@@ -90,12 +90,16 @@
         '';
       };
 
-      botImage = ({ lib, stdenvNoCC, dockerTools, buildEnv, python312, ...}@pkgs: 
-        (dockerTools.buildLayeredImage {
+      botImage = ({ lib, stdenvNoCC, dockerTools, buildEnv, python312, ...}@pkgs: let
+        lastModifyDate = lib.substring 0 8 self.lastModifiedDate;
+        lastModifyTime = lib.substring 8 14 self.lastModifiedDate;
+        tagPart2 = lib.substring 0 8 (self.rev or lastModifyTime);
+      in (dockerTools.buildLayeredImage {
           name = "tgbot";
-          #name = "tgbot";
-          tag = "latest";
-          created = lib.substring 0 8 self.lastModifiedDate;
+          # if unset, tag by default refers to the nix input content hash
+          # YYYYMMDD-<commit-part> or YYYYMMDD-hhmmss
+          tag = "${lastModifyDate}-${tagPart2}";
+          created = lastModifyDate; # YYYYMMDD
           compressor = "none"; # "gz", "zstd".
 
           maxLayers = 16;
@@ -160,11 +164,13 @@
           #    <registry>/<project>/<container>:<tag>@<digest>
           # for usual images we use <container>:<tag>@<digest>
           toURI = image: "${image.imageName}:${image.imageTag}@${image.imageDigest}";
+          toURInoDigest = image: "${image.imageName}:${image.imageTag}";
         in { # @<name>@ -> ...
           alpine_imageid    = toURI alpine;
           redis_imageid     = toURI redis;
           postgres_imageid  = toURI postgres;
           mongo_imageid     = toURI mongo;
+          tgbot_imageid     = toURInoDigest tgbot;
         };
       };
       composed = composed_nodb.overrideAttrs (a: a // {
