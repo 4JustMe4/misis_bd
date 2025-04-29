@@ -25,8 +25,7 @@ def dumpResults(schedule, session, location, teacher):
     writeJson(teacher, 'teacher')
 
 
-if __name__ == "__main__":
-    Log.info('Start json updating')
+def getSchedules():
     schedule = {}
     for url in getNewSheduleUrls():
         if url.endswith('.xlsx'):
@@ -43,5 +42,14 @@ if __name__ == "__main__":
 
     byLocation = schedule2location(schedule)
     byTeacher = schedule2teacher(schedule)
+    return schedule, session, byLocation, byTeacher
 
+
+def main():
+    Log.info('Start json updating')
+    schedule, session, byLocation, byTeacher = getSchedules()
     dumpResults(schedule, session, byLocation, byTeacher)
+
+
+if __name__ == "__main__":
+    main()
