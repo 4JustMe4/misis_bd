@@ -2,3 +2,4 @@ result
 secrets.env
 *__pycache__*
 parser/tmp.xls
+*.env
