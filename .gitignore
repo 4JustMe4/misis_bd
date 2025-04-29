@@ -3,3 +3,4 @@ secrets.env
 *__pycache__*
 parser/tmp.xls
 *.env
+parser/tunnel.ovpn
