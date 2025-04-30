@@ -38,7 +38,7 @@ def parseExam(sheet, date, examStart, subGroupStart):
 def parseDay(sheet, groupName, subGroupName, date, dayStart, subGroupStart):
     day = {}
     for exam in range(0, DAY_WIDTH):
-        day[exam + 1] = parseExam(sheet, date, dayStart + exam, subGroupStart)
+        day[str(exam + 1)] = parseExam(sheet, date, dayStart + exam, subGroupStart)
 
     return day
 

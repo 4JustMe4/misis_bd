@@ -8,6 +8,8 @@ from schedule2teacher import schedule2teacher
 from url2schedule import url2schedule
 from url2session import url2session
 
+from mongo import updateMongo
+
 
 Log = logging.Logger("updater")
 
@@ -23,6 +25,7 @@ def dumpResults(schedule, session, location, teacher):
     writeJson(session, 'session')
     writeJson(location, 'location')
     writeJson(teacher, 'teacher')
+    updateMongo(schedule, session, location, teacher)
 
 
 def getSchedules():
