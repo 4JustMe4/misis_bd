@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from user_profile.profile_utils import load_user_profile
+from ..user_profile.profile_utils import load_user_profile
 
 def get_user_profile(user_id: int):
     """Загружает профиль пользователя"""
