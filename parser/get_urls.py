@@ -1,17 +1,17 @@
 import requests
-import logging
 
 from bs4 import BeautifulSoup
+from formatted_logger import getFormattedLogger
 
 MISIS_SCHEDULE = 'https://misis.ru/students/schedule/'
 MISIS_SESSION = 'https://misis.ru/students/session/'
 FILES_PREFIX = 'https://misis.ru'
 
-UrlLog = logging.Logger('url_updater')
+UrlLog = getFormattedLogger('url_updater')
 
 
 def getAllLinks(url):
-    UrlLog.warning(f'Processing url: {url}')
+    UrlLog.info(f'Processing url: {url}')
     response = requests.get(url)
     links = []
     if response.status_code == 200:
@@ -22,19 +22,19 @@ def getAllLinks(url):
                 if link.startswith('/files/-/'):
                     links.append(FILES_PREFIX + link)
                 else:
-                    UrlLog.info(f'Ignore {link}')
+                    UrlLog.debug(f'Ignore {link}')
     else:
         UrlLog.error(f'Request to {MISIS_SCHEDULE} was failed: {response.status_code}')
-    UrlLog.info(f'The result is: {links}')
+    UrlLog.info(f'The list of urls is: {links}')
     return links
 
 
 def getNewSheduleUrls():
-    UrlLog.warning(f'Reupdate url lists for {MISIS_SCHEDULE}')
+    UrlLog.info(f'Reupdate url lists for {MISIS_SCHEDULE}')
     return getAllLinks(MISIS_SCHEDULE)
 
 def getNewSessionUrls():
-    UrlLog.warning(f'Reupdate url lists for {MISIS_SESSION}')
+    UrlLog.info(f'Reupdate url lists for {MISIS_SESSION}')
     return getAllLinks(MISIS_SESSION)
 
 

@@ -1,10 +1,9 @@
-import logging
-
+from formatted_logger import getFormattedLogger
 from utils import processUrl
 
 DAYS = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
 DAY_WIDTH = 14
-Url2scheduleLog = logging.Logger("url2schedule")
+Url2scheduleLog = getFormattedLogger("url2schedule")
 
 
 def getGroupWidth(sheet, startIdx):
@@ -73,7 +72,7 @@ def parseSubGroup(sheet, groupName, subGroupName, subGroupStart):
 
 
 def parseGroup(sheet, groupName, groupStart, width):
-    Url2scheduleLog.info(f'Process sheet {sheet.name}, group {groupName}')
+    Url2scheduleLog.debug(f'Process sheet {sheet.name}, group {groupName}')
     group = {}
     for subGroup in range(0, width, 2):
         group[str(subGroup // 2 + 1)] = parseSubGroup(sheet, groupName, subGroup, groupStart + subGroup)
