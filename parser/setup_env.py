@@ -22,6 +22,7 @@ def setupMongoEnv():
     EnvLog.info('Set up envvars for mongo')
     if os.environ.get('MONGO_INITDB_ROOT_USERNAME') is None:
         EnvLog.warning('Use hardcoded values. IT IS ERROR IF YOU SEE IT ON SERVER')
+
         os.environ['MONGO_INITDB_ROOT_USERNAME'] = 'bot'
         os.environ['MONGO_INITDB_ROOT_PASSWORD'] = '12345678'
         os.environ['BOT_MONGO_PORT'] = '27017'
@@ -33,3 +34,9 @@ def setupRedisEnv():
     EnvLog.info('Set up envvars for redis')
     if os.environ.get('BOT_REDIS_HOSTNAME') is None:
         EnvLog.warning('Use hardcoded values. IT IS ERROR IF YOU SEE IT ON SERVER')
+
+        os.environ['BOT_REDIS_PORT'] = '6379'
+        os.environ['BOT_REDIS_HOSTNAME'] = 'localhost'
+        os.environ['REDIS_PASSWORD'] = '12345678'
+    else:
+        EnvLog.info('Use preset env for redis')
