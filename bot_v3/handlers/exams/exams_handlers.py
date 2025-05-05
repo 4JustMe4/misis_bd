@@ -8,7 +8,7 @@ from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
-from handlers.study.common import loadData
+from handlers.loader import loadData
 
 # Создаем роутер
 router = Router()

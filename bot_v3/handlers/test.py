@@ -1,4 +1,5 @@
-from handlers.study.common import loadData
+from loader import loadData
+
 
 def get_session_schedule(group_name: str) -> str:
     data = loadData("session")

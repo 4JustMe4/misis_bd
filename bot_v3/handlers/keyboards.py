@@ -1,6 +1,7 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 
-from handlers.study.common import loadData
+from handlers.loader import loadData
+
 from .user_profile.profile_keyboards import MG_, SG_
 
 def get_main_menu() -> ReplyKeyboardMarkup:

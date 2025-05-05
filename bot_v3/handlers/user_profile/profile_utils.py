@@ -7,7 +7,7 @@ from aiogram import Bot
 from aiogram.types import CallbackQuery, Message
 from aiogram.exceptions import TelegramBadRequest
 
-from handlers.study.common import loadData
+from handlers.loader import loadData
 
 
 def load_user_profile(user_id: int) -> Dict:

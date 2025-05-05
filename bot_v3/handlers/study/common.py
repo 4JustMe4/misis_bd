@@ -1,7 +1,5 @@
 from datetime import datetime, timedelta
-from handlers.user_profile.profile_utils import load_user_profile
-import json
-from parser.mongo import loadJsonFromMongo
+from user_profile.profile_utils import load_user_profile
 
 def get_user_profile(user_id: int):
     """Загружает профиль пользователя"""
@@ -35,16 +33,3 @@ def get_tomorrow():
         "Sunday": "Воскресенье"
     }
     return days.get(day.strftime("%A"), "Неизвестный день")
-
-
-def loadData(name):
-    data = loadJsonFromMongo(name)
-    if data is not None:
-        return data
-    else:
-        try:
-            with open(f"data/{name}.json", "r", encoding="utf-8") as file:
-                return json.load(file)
-        except Exception as e:
-            print(f"Ошибка при чтении локального файла {name}.json: {e}")
-            return None

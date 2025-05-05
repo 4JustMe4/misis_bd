@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from handlers.study.common import loadData
+from handlers.loader import loadData
 from handlers.user_profile.profile_utils import get_subgroups_for_group
 
 # Префиксы для изоляции колбэков

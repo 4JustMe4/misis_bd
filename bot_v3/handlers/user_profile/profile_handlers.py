@@ -6,8 +6,9 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 from typing import Dict, Optional, Union
 
+from handlers.loader import loadData
 from handlers.keyboards import get_weekday_buttons
-from handlers.study.common import get_day, loadData
+from handlers.study.common import get_day
 from handlers.study.current_schedule import get_schedule
 from aiogram.exceptions import TelegramBadRequest
 

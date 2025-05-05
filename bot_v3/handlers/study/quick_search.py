@@ -6,7 +6,9 @@ from typing import List
 import logging
 import re
 
-from .common import loadData, user_selections, get_day
+from handlers.loader import loadData
+
+from .common import user_selections, get_day
 from .current_schedule import get_schedule
 
 

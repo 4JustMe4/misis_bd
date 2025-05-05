@@ -6,11 +6,12 @@ from aiogram import Router, types, F
 from aiogram.types import Message, CallbackQuery
 import json
 
+from handlers.loader import loadData
 from handlers.user_profile.profile_handlers import show_profile
 from handlers.user_profile.profile_keyboards import get_profile_keyboard
 
 from .current_schedule import get_day, get_schedule
-from .common import loadData, user_selections, get_day
+from .common import user_selections, get_day
 from handlers.user_profile.profile_utils import get_profile_text, load_user_profile, save_user_profile
 
 from handlers.keyboards import (

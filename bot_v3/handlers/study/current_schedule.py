@@ -6,10 +6,11 @@ import json
 import random
 from datetime import datetime, timedelta
 
+from handlers.loader import loadData
 from handlers.user_profile.profile_keyboards import get_profile_keyboard
 from handlers.user_profile.profile_utils import load_user_profile
 
-from .common import get_user_profile, loadData, user_selections, get_day, get_tomorrow
+from .common import get_user_profile, user_selections, get_day, get_tomorrow
 
 from handlers.keyboards import (
     get_weekday_buttons
