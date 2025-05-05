@@ -15,8 +15,9 @@ def getCollection():
         return None
     username = os.environ['MONGO_INITDB_ROOT_USERNAME']
     password = os.environ['MONGO_INITDB_ROOT_PASSWORD']
-    port = os.environ['HOST_MONGO_PORT']
-    url = f'mongodb://{username}:{password}@localhost:{port}/{TABLE_NAME}'
+    port = os.environ['BOT_MONGO_PORT']
+    host = os.environ['BOT_MONGO_HOSTNAME']
+    url = f'mongodb://{username}:{password}@{host}:{port}/{TABLE_NAME}'
     client = pymongo.MongoClient(url)
     db = client[TABLE_NAME]
     collection = db['schedule']

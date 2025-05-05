@@ -48,7 +48,8 @@ def getConnection():
         dbname=os.environ['POSTGRES_DB'],
         user=os.environ['POSTGRES_USER'],
         password=os.environ['POSTGRES_PASSWORD'],
-        port=os.environ['HOST_POSTGRES_PORT']
+        port=os.environ['BOT_POSTGRES_PORT'],
+        host=os.environ['BOT_POSTGRES_HOSTNAME'],
     )
     return connection
 

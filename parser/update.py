@@ -4,6 +4,7 @@ import os
 from formatted_logger import getFormattedLogger
 from get_urls import getNewSheduleUrls, getNewSessionUrls
 from mongo import updateMongo
+from redis_utils import updateAllRedis
 from schedule2location import schedule2location
 from schedule2teacher import schedule2teacher
 from url2schedule import url2schedule
@@ -25,6 +26,7 @@ def dumpResults(schedule, session, location, teacher):
     writeJson(location, 'location')
     writeJson(teacher, 'teacher')
     updateMongo(schedule, session, location, teacher)
+    updateAllRedis(schedule, session, location, teacher)
 
 
 def getSchedules():
