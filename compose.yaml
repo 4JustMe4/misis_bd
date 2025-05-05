@@ -14,6 +14,15 @@ x-healthcheck-params: &healthcheck-params
   retries: 3
   start_period: 30s
 
+x-db-depends: &db-depends
+  depends_on:
+    redis:
+      condition: service_healthy
+    postgres:
+      condition: service_healthy
+    mongo:
+      condition: service_healthy
+
 services:
   redis:
     # redis:7.4.2-alpine3.21 # for example
@@ -83,18 +92,16 @@ services:
   tgbot:
     # local image
     image: @tgbot_imageid@
-    depends_on:
-      redis:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-      mongo:
-        condition: service_healthy
-
     restart: always
+    <<: *db-depends
     <<: *env-file
-    # BOT_TOKEN
 
+  dbupdater:
+    image: @tgbot_imageid@
+    <<: *db-depends
+    <<: *env-file
+    working_dir: /bot_parser
+    command: ["sh", "-c", "while true; python3 update.py; sleep 3600; done"]
 
   initscript:
     # base alpine image

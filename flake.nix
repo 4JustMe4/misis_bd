@@ -68,6 +68,9 @@
         pythonPackages: with pythonPackages; [
           aiofiles
           aiogram
+          pymongo
+          psycopg
+          redis
           aiohappyeyeballs
           aiohttp
           aiosignal
@@ -97,6 +100,7 @@
         installPhase = ''
           mkdir -p $out
           cp -Tr $src/bot_v3 $out/bot_srv
+          cp -Tr $src/parser $out/bot_parser
         '';
       };
 
