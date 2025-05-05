@@ -95,13 +95,14 @@ services:
     restart: always
     <<: *db-depends
     <<: *env-file
+    # BOT_TOKEN
 
   dbupdater:
     image: @tgbot_imageid@
     <<: *db-depends
     <<: *env-file
     working_dir: /bot_parser
-    command: ["sh", "-c", "while true; python3 update.py; sleep 3600; done"]
+    command: sh -c 'while true; do python3 update.py; sleep 3600; done'
 
   initscript:
     # base alpine image

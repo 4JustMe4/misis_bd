@@ -71,6 +71,7 @@
           pymongo
           psycopg
           redis
+          beautifulsoup4
           aiohappyeyeballs
           aiohttp
           aiosignal
