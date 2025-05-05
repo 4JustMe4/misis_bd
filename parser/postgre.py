@@ -1,10 +1,13 @@
 import psycopg
+import os
 
 from datetime import datetime
 from formatted_logger import getFormattedLogger
+from setup_env import setupPostgreEnv
 
 PostgreLog = getFormattedLogger("postgre")
 TABLE_NAME = "files"
+setupPostgreEnv()
 
 def createIfNeed(cursor):
     PostgreLog.info(f"Check if table {TABLE_NAME} exists")
@@ -42,9 +45,9 @@ def insertData(cursor, url, data):
 def getConnection():
     PostgreLog.info(f"Try connect to postgre")
     connection = psycopg.connect(
-        dbname="db",
-        user="bot",
-        password="12345678",
+        dbname=os.environ['POSTGRES_DB'],
+        user=os.environ['POSTGRES_USER'],
+        password=os.environ['POSTGRES_PASSWORD'],
     )
     return connection
 
