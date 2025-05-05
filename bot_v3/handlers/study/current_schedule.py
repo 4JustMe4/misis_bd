@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from handlers.user_profile.profile_keyboards import get_profile_keyboard
 from handlers.user_profile.profile_utils import load_user_profile
 
-from .common import get_user_profile, user_selections, get_day, get_tomorrow
+from .common import get_user_profile, loadData, user_selections, get_day, get_tomorrow
 
 from handlers.keyboards import (
     get_weekday_buttons
@@ -39,8 +39,7 @@ async def today_schedule(message: Message):
     group = user_profile["main_group"]
     subgroup = user_profile["subgroup"]
 
-    with open("data/schedule.json", "r", encoding="utf-8") as file:
-        schedule = json.load(file)
+    schedule = loadData("schedule")
 
     response = get_schedule(group, subgroup, current_week, today, schedule)
 
@@ -66,8 +65,7 @@ async def today_schedule(message: Message):
     group = user_profile["main_group"]
     subgroup = user_profile["subgroup"]
 
-    with open("data/schedule.json", "r", encoding="utf-8") as file:
-        schedule = json.load(file)
+    schedule = loadData("schedule")
 
     response = get_schedule_next(group, subgroup, current_week, tomorrow, schedule)
 
@@ -94,8 +92,7 @@ async def my_schedule(message: Message):
     group = user_profile["main_group"]
     subgroup = user_profile["subgroup"]
 
-    with open("data/schedule.json", "r", encoding="utf-8") as file:
-        schedule = json.load(file)
+    schedule = loadData("schedule")
 
     response = get_schedule(group, subgroup, current_week, today, schedule)
 
@@ -148,8 +145,7 @@ async def weekday_callback(call: types.CallbackQuery):
         day = days_mapping.get(day_part.capitalize(), "Неизвестный день")
 
         # 4. Загружаем расписание
-        with open("data/schedule.json", "r", encoding="utf-8") as file:
-            schedule = json.load(file)
+        schedule = loadData("schedule")
 
         # 5. Формируем ответ с ЯВНЫМ указанием группы
         response = (

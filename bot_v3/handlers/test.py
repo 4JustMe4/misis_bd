@@ -1,8 +1,7 @@
-import json
+from handlers.study.common import loadData
 
 def get_session_schedule(group_name: str) -> str:
-    with open('bot_v3/data/session.json', 'r', encoding='utf-8') as file:
-        data = json.load(file)
+    data = loadData("session")
     
     if group_name not in data:
         return f"❌ Расписание сессии для группы {group_name} не найдено."

@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-import json
 
+from handlers.study.common import loadData
 from handlers.user_profile.profile_utils import get_subgroups_for_group
 
 # Префиксы для изоляции колбэков
@@ -43,8 +43,8 @@ def get_manage_saved_groups_keyboard(groups: list, is_remove_mode: bool = False)
 def get_institutes_menu(context: str) -> InlineKeyboardMarkup:
     """Клавиатура выбора института с кнопками в 3 колонки"""
     prefix = MG_ if context == "main" else SG_
-    with open("data/groups.json", "r", encoding="utf-8") as f:
-        institutes = list(json.load(f).keys())
+    institutes = list(loadData("groups").keys())
+        
     
     buttons = []
     for i in range(0, len(institutes), 3):
@@ -60,8 +60,7 @@ def get_institutes_menu(context: str) -> InlineKeyboardMarkup:
 def get_years_menu(institute: str, context: str) -> InlineKeyboardMarkup:
     """Клавиатура выбора курса с кнопками в 2 колонки"""
     prefix = MG_ if context == "main" else SG_
-    with open("data/groups.json", "r", encoding="utf-8") as f:
-        years = list(json.load(f).get(institute, {}).keys())
+    years = list(loadData("groups").get(institute, {}).keys())
     
     buttons = []
     for i in range(0, len(years), 2):
@@ -77,8 +76,7 @@ def get_years_menu(institute: str, context: str) -> InlineKeyboardMarkup:
 def get_groups_menu(institute: str, year: str, context: str) -> InlineKeyboardMarkup:
     """Клавиатура выбора группы с кнопками в 3 колонки"""
     prefix = MG_ if context == "main" else SG_
-    with open("data/groups.json", "r", encoding="utf-8") as f:
-        groups = json.load(f).get(institute, {}).get(year, [])
+    groups = loadData("groups").get(institute, {}).get(year, [])
     
     buttons = []
     for i in range(0, len(groups), 3):

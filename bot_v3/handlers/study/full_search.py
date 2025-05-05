@@ -10,7 +10,7 @@ from handlers.user_profile.profile_handlers import show_profile
 from handlers.user_profile.profile_keyboards import get_profile_keyboard
 
 from .current_schedule import get_day, get_schedule
-from .common import user_selections, get_day
+from .common import loadData, user_selections, get_day
 from handlers.user_profile.profile_utils import get_profile_text, load_user_profile, save_user_profile
 
 from handlers.keyboards import (
@@ -154,8 +154,7 @@ async def confirm_save(call: CallbackQuery):
         today = get_day()
         current_week = "upper" if (datetime.now().isocalendar()[1] % 2) != 0 else "lower"
         
-        with open("data/schedule.json", "r", encoding="utf-8") as f:
-            schedule = json.load(f)
+        schedule = loadData(schedule)
             
         await call.message.answer(
             text=get_schedule(selected["group"], selected["subgroup"], current_week, today, schedule),

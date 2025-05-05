@@ -4,10 +4,9 @@ from datetime import datetime
 from typing import Union
 from typing import List
 import logging
-import json
 import re
 
-from .common import user_selections, get_day
+from .common import loadData, user_selections, get_day
 from .current_schedule import get_schedule
 
 
@@ -35,8 +34,7 @@ def detect_and_search(query: str) -> dict:
     # 1. Поиск преподавателя (только буквы)
     if query.isalpha():
         #print("Тип: Проверка преподавателя")
-        with open("data/teacher.json", "r", encoding="utf-8") as f:
-            teachers = json.load(f).keys()
+        teachers = loadData("teacher").keys()
         
         matches = [t for t in teachers if t.split()[0].upper().startswith(query)]
         if matches:
@@ -46,8 +44,7 @@ def detect_and_search(query: str) -> dict:
     # 2. Поиск групп (формат: БУТ-21-1)
     if re.match(r'^[А-ЯA-Z]{2,}(-\d{2,})?(-\d)?$', query):
         #print("Тип: Проверка группы")
-        with open("data/schedule.json", "r", encoding="utf-8") as f:
-            all_groups = json.load(f).keys()
+        all_groups = loadData("schedule").keys()
         
         # Нормализуем запрос (БПМ 21-1 → БПМ-21-1)
         normalized = normalize_group_name(query)
@@ -61,8 +58,7 @@ def detect_and_search(query: str) -> dict:
     
     # 3. Поиск аудиторий (формат: Л-711 или Л711)
     #print("Тип: Проверка аудитории")
-    with open("data/location.json", "r", encoding="utf-8") as f:
-        all_rooms = json.load(f).keys()
+    all_rooms = loadData("location").keys()
     
     # Нормализуем запрос (л711 → Л-711)
     normalized = normalize_room_name(query)
@@ -246,8 +242,7 @@ async def show_room_schedule(message: Message, room: str):
         today = get_day()
         current_week = "upper" if (datetime.today().isocalendar()[1] % 2) != 0 else "lower"
         
-        with open("data/location.json", "r", encoding="utf-8") as f:
-            schedule_data = json.load(f)
+        schedule_data = loadData("location")
         
         schedule = get_room_schedule(room, current_week, today, schedule_data)
         await message.answer(
@@ -269,8 +264,7 @@ async def handle_room_search(message: Message):
     room = normalize_room_name(room_input)
     
     try:
-        with open("data/location.json", "r", encoding="utf-8") as f:
-            schedule_data = json.load(f)
+        schedule_data = loadData("location")
         
         if room not in schedule_data:
             # Попробуем найти похожие аудитории
@@ -312,8 +306,7 @@ async def handle_group_search(message: Message):
     group = normalize_group_name(user_input)
     
     try:
-        with open("data/schedule.json", "r", encoding="utf-8") as f:
-            schedule_data = json.load(f)
+        schedule_data = loadData("schedule")
         
         # Проверяем точное совпадение
         if group in schedule_data:
@@ -398,8 +391,7 @@ async def handle_quick_room_select(call: types.CallbackQuery):
     room = call.data.split("_")[2]
     
     try:
-        with open("data/location.json", "r", encoding="utf-8") as f:
-            schedule_data = json.load(f)
+        schedule_data = loadData("location")
         
         schedule = get_room_schedule(room, current_week, today, schedule_data)
         await call.message.edit_text(
@@ -433,8 +425,7 @@ async def handle_room_day_selection(call: CallbackQuery):
             "thursday": "Четверг", "friday": "Пятница", "saturday": "Суббота"
         }.get(day_type.lower(), "Неизвестный день")
         
-        with open("data/location.json", "r", encoding="utf-8") as f:
-            schedule_data = json.load(f)
+        schedule_data = loadData("location")
         
         schedule = get_room_schedule(room, week_type, day_russian, schedule_data)
         
@@ -494,8 +485,7 @@ def normalize_group_name(group: str) -> str:
 
 def find_group_matches(query: str) -> list:
     #Находит группы, соответствующие запросу#
-    with open("data/groups.json", "r", encoding="utf-8") as f:
-        groups_data = json.load(f)
+    groups_data = loadData("groups")
     
     query = normalize_group_name(query)
     all_groups = []
@@ -568,8 +558,7 @@ async def show_group_schedule(
         message = message_or_call
         user_id = message.from_user.id
 
-    with open("data/schedule.json", "r", encoding="utf-8") as f:
-        schedule_data = json.load(f)
+    schedule_data = loadData("schedule")
     
     schedule = get_schedule(group, subgroup, current_week, today, schedule_data)
     
@@ -596,8 +585,7 @@ async def show_group_schedule(
 def find_teachers_by_last_name(last_name: str) -> List[str]:
     #Находит всех преподавателей по фамилии#
     try:
-        with open("data/teacher.json", "r", encoding="utf-8") as f:
-            teachers_data = json.load(f)
+        teachers_data = loadData("teacher")
         
         # Ищем преподавателей, у которых фамилия начинается с запроса
         matches = []
@@ -616,8 +604,7 @@ def find_teachers_by_last_name(last_name: str) -> List[str]:
 async def show_teacher_schedule(message: Message, teacher_name: str):
     """Показывает расписание с кнопками выбора дня и недели"""
     try:
-        with open("data/teacher.json", "r", encoding="utf-8") as f:
-            teachers_data = json.load(f)
+        teachers_data = loadData("teacher")
         
         if teacher_name not in teachers_data:
             await message.answer("Расписание преподавателя не найдено")
@@ -668,8 +655,7 @@ async def handle_teacher_day_selection(call: CallbackQuery):
             "friday": "Пятница", "saturday": "Суббота"
         }.get(day_type.lower(), "Понедельник")
         
-        with open("data/teacher.json", "r", encoding="utf-8") as f:
-            teachers_data = json.load(f)
+        teachers_data = loadData("teacher")
         
         if teacher_name not in teachers_data or day_russian not in teachers_data[teacher_name]:
             # Форматируем сообщение для дня без расписания
