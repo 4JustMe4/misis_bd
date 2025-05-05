@@ -2,9 +2,10 @@ import logging
 import requests
 import xlrd
 
+from formatted_logger import getFormattedLogger
 from postgre import loadUrlFromPostgre, insertUrlToPostgre
 
-UtilsLog = logging.Logger("utils")
+UtilsLog = getFormattedLogger("utils")
 
 
 def processFile(file, sheetFunc):

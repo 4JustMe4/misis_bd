@@ -1,13 +1,13 @@
-import logging
 import psycopg
 
 from datetime import datetime
+from formatted_logger import getFormattedLogger
 
-PostgreLog = logging.Logger("postgre")
+PostgreLog = getFormattedLogger("postgre")
 TABLE_NAME = "files"
 
 def createIfNeed(cursor):
-    PostgreLog.warning(f"Check if table {TABLE_NAME} exists")
+    PostgreLog.info(f"Check if table {TABLE_NAME} exists")
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
             url TEXT PRIMARY KEY,
@@ -16,12 +16,13 @@ def createIfNeed(cursor):
         );
     """)
 
+
 def getData(cursor, url):
-    PostgreLog.warning(f"Fetch data for url from postgre: {url}")
+    PostgreLog.info(f"Try to fetch data for url from postgre: {url}")
     cursor.execute('SELECT data, createdAt FROM files WHERE url = %s;', (url, ))
     result = cursor.fetchone()
     if result:
-        PostgreLog.warning(f"Data sucsessfuly fetched")
+        PostgreLog.info(f"Data sucsessfuly fetched")
         return result[0]
     else:
         PostgreLog.warning(f"Data not found")
@@ -29,7 +30,7 @@ def getData(cursor, url):
 
 
 def insertData(cursor, url, data):
-    PostgreLog.warning(f"Add data for url to postgre: {url}")
+    PostgreLog.info(f"Add data for url to postgre: {url}")
     cursor.execute('''
         INSERT INTO files (url, data, createdAt) 
         VALUES (%s, %s, %s);
@@ -39,7 +40,7 @@ def insertData(cursor, url, data):
 
 
 def getConnection():
-    PostgreLog.warning(f"Try connect to postgre")
+    PostgreLog.info(f"Try connect to postgre")
     connection = psycopg.connect(
         dbname="db",
         user="bot",
@@ -49,7 +50,7 @@ def getConnection():
 
 
 def loadUrlFromPostgre(url):
-    PostgreLog.warning(f"Try to load url {url} from postgre")
+    PostgreLog.info(f"Try to load url {url} from postgre")
     try:
         connection = getConnection()
         cursor = connection.cursor()
@@ -63,7 +64,7 @@ def loadUrlFromPostgre(url):
 
 
 def insertUrlToPostgre(url, data):
-    PostgreLog.error(f"Try to add url {url} to postgre")
+    PostgreLog.info(f"Try to add url {url} to postgre")
     try:
         connection = getConnection()
         cursor = connection.cursor()

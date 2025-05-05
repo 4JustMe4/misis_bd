@@ -1,17 +1,16 @@
 import json
-import logging
 import os
 
+from formatted_logger import getFormattedLogger
 from get_urls import getNewSheduleUrls, getNewSessionUrls
+from mongo import updateMongo
 from schedule2location import schedule2location
 from schedule2teacher import schedule2teacher
 from url2schedule import url2schedule
 from url2session import url2session
 
-from mongo import updateMongo
 
-
-Log = logging.Logger("updater")
+Log = getFormattedLogger("updater")
 
 
 def writeJson(data, name):
