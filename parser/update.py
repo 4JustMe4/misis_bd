@@ -47,11 +47,13 @@ def getSchedules():
     return schedule, session, byLocation, byTeacher
 
 
-def main():
+def update():
     Log.info('Start json updating')
     schedule, session, byLocation, byTeacher = getSchedules()
     dumpResults(schedule, session, byLocation, byTeacher)
 
+def main():
+    update()
 
 if __name__ == "__main__":
     main()

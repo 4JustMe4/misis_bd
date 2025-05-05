@@ -3,7 +3,7 @@ import os
 from formatted_logger import getFormattedLogger
 
 
-EnvLog = getFormattedLogger("SetupEnv")
+EnvLog = getFormattedLogger("setupEnv")
 
 def setupPostgreEnv():
     EnvLog.info('Set up envvars for postgre')
