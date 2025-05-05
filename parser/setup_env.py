@@ -13,7 +13,8 @@ def setupPostgreEnv():
         os.environ['POSTGRES_USER'] = 'bot'
         os.environ['POSTGRES_PASSWORD'] = '12345678'
         os.environ['POSTGRES_DB'] = 'db'
-        os.environ['HOST_POSTGRES_PORT'] = '5432'
+        os.environ['BOT_POSTGRES_PORT'] = '5432'
+        os.environ['BOT_POSTGRES_HOSTNAME'] = 'localhost'
     else:
         EnvLog.info('Use preset env for postgre')
 
@@ -23,7 +24,8 @@ def setupMongoEnv():
         EnvLog.warning('Use hardcoded values. IT IS ERROR IF YOU SEE IT ON SERVER')
         os.environ['MONGO_INITDB_ROOT_USERNAME'] = 'bot'
         os.environ['MONGO_INITDB_ROOT_PASSWORD'] = '12345678'
-        os.environ['HOST_MONGO_PORT'] = '27017'
+        os.environ['BOT_MONGO_PORT'] = '27017'
+        os.environ['BOT_MONGO_HOSTNAME'] = 'localhost'
     else:
         EnvLog.info('Use preset env for mongo')
 
