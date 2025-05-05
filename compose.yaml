@@ -25,8 +25,8 @@ services:
     #depends_on:
     #  initscript:
     #    condition: service_completed_successfully
-    ports:
-      - "6379:6379"
+    expose:
+      - "6379"
     <<: *env-file
     # REDIS_PASSWORD
     #volumes:
@@ -46,8 +46,8 @@ services:
     depends_on:
       initscript:
         condition: service_completed_successfully
-    ports:
-      - "5432:5432"
+    expose:
+      - "5432"
     <<: *env-file
     # POSTGRES_USER
     # POSTGRES_PASSWORD
@@ -68,8 +68,8 @@ services:
     depends_on:
       initscript:
         condition: service_completed_successfully
-    ports:
-      - "27017:27017"
+    expose:
+      - "27017"
     <<: *env-file
     # MONGO_INITDB_ROOT_USERNAME
     # MONGO_INITDB_ROOT_PASSWORD

@@ -35,6 +35,16 @@
         finalImageTag = "7.4.2-alpine3.21";
         sha256 = "sha256-OLdmIch4dPgLVnuVOdbljtWZyDKJszGA1T8OnjKhauc=";
       });
+      redisStackServerImageOfficial = ({ dockerTools, ... }: dockerTools.pullImage {
+        imageName = "redis/redis-stack-server";
+        imageDigest ="sha256:a8d64e9f5bc99dc83f2a807a93f44d59efab0d2c4f09cff03f01b8753842e0cc";
+        os = "linux";
+        arch = "x86_64";
+        finalImageName = "redis/redis-stack-server";
+        finalImageTag = "7.4.0-v3";
+        sha256 = "sha256-aJXDbqFgdj9WD71b84h7wu1B6w14QNjCpxk7HjmilTk=";
+      });
+
       postgresImageOfficial = ({ dockerTools, ... }: dockerTools.pullImage {
         imageName = "postgres";
         imageDigest = "sha256:0ae695e3d11c7cc82cbed8f3e506233f18cdd40e3fc7622893f6a4d0772a5a09";
@@ -157,6 +167,7 @@
     in rec {
       alpine    = pkgs.callPackage alpineImageOfficial {};
       redis     = pkgs.callPackage redisImageOfficial {};
+      redis-stack-server  = pkgs.callPackage redisStackServerImageOfficial {};
       postgres  = pkgs.callPackage postgresImageOfficial {};
       mongo     = pkgs.callPackage mongoImageOfficial {};
       tgbot = pkgs.callPackage botImage {};
@@ -169,7 +180,7 @@
           toURInoDigest = image: "${image.imageName}:${image.imageTag}";
         in { # @<name>@ -> ...
           alpine_imageid    = toURI alpine;
-          redis_imageid     = toURI redis;
+          redis_imageid     = toURI redis-stack-server;
           postgres_imageid  = toURI postgres;
           mongo_imageid     = toURI mongo;
           tgbot_imageid     = toURInoDigest tgbot;
@@ -178,7 +189,7 @@
       composed = composed_nodb.overrideAttrs (a: a // {
         installPhase = a.installPhase + ''
           cp -T ${alpine} $out/${alpine.name}
-          cp -T ${redis} $out/${redis.name}
+          cp -T ${redis-stack-server} $out/${redis-stack-server.name}
           cp -T ${postgres} $out/${postgres.name}
           cp -T ${mongo} $out/${mongo.name}
         '';
@@ -191,6 +202,8 @@
           root = ./.; #builtins.toPath self;
           fileset = pkgs.lib.fileset.unions [
             ./defaults.env
+            ./compose.prod.yaml
+            ./compose.test.yaml
           ];
         };
         phases = ["installPhase" ];
@@ -199,6 +212,7 @@
           cp -T ${tgbot} $out/${tgbot.name}
           cp -T ${compose_yaml} $out/compose.yaml
           cp $src/defaults.env $out/
+          cp $src/compose.*.yaml $out/
         '';
 
         meta = {

@@ -1,0 +1,27 @@
+include:
+  compose.yaml
+
+name: tgbot-prod
+
+x-env-file: &env-file
+  env_file:
+    - path: ./defaults.env
+      required: true
+    - path: ./prod.env
+      required: true
+
+services:
+  redis:
+    <<: *env-file
+    ports:
+      - "${HOST_REDIS_PORT}:6379"
+  postgres:
+    <<: *env-file
+    ports:
+      - "${HOST_POSTGRES_PORT}:5432"
+  mongo:
+    <<: *env-file
+    ports:
+      - "${HOST_MONGO_PORT}:27017"
+
+# docker-compose --env-file prod.env -f compose.prod.yaml
