@@ -1,5 +1,3 @@
-include:
-  compose.yaml
 
 name: tgbot-test
 
@@ -24,4 +22,4 @@ services:
     ports:
       - "${HOST_MONGO_PORT}:27017"
 
-# docker-compose --env-file test.env -f compose.test.yaml
+# docker-compose --env-file test.env -f compose.yaml -f compose.test.yaml

@@ -41,7 +41,7 @@ services:
     image: @postgres_imageid@
     restart: always
     healthcheck:
-      test: pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
+      test: pg_isready -U \$POSTGRES_USER -d \$POSTGRES_DB
       <<: *healthcheck-params
     depends_on:
       initscript:
