@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from handlers.user_profile.profile_utils import load_user_profile
+from ..user_profile.profile_utils import load_user_profile
 
 def get_user_profile(user_id: int):
     """Загружает профиль пользователя"""
@@ -33,4 +33,3 @@ def get_tomorrow():
         "Sunday": "Воскресенье"
     }
     return days.get(day.strftime("%A"), "Неизвестный день")
-

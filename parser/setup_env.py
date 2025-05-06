@@ -1,6 +1,6 @@
 import os
 
-from formatted_logger import getFormattedLogger
+from .formatted_logger import getFormattedLogger
 
 
 EnvLog = getFormattedLogger("setupEnv")

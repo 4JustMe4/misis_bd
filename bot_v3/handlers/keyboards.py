@@ -1,6 +1,8 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+
+from handlers.loader import loadData
+
 from .user_profile.profile_keyboards import MG_, SG_
-import json
 
 def get_main_menu() -> ReplyKeyboardMarkup:
     """Клавиатура с главным меню."""
@@ -124,8 +126,7 @@ def get_institutes_menu() -> InlineKeyboardMarkup:
 
 def get_years_menu(institute: str) -> InlineKeyboardMarkup:
     """Клавиатура с выбором курса (Inline)"""
-    with open("data/groups.json", "r", encoding="utf-8") as f:
-        groups_data = json.load(f)
+    groups_data = loadData("groups")
     
     years = list(groups_data.get(institute, {}).keys())
     buttons = []
@@ -141,8 +142,7 @@ def get_years_menu(institute: str) -> InlineKeyboardMarkup:
 
 def get_groups_menu(institute: str, year: str) -> InlineKeyboardMarkup:
     """Клавиатура с выбором группы (Inline)"""
-    with open("data/groups.json", "r", encoding="utf-8") as f:
-        groups_data = json.load(f)
+    groups_data = loadData("groups")
     
     groups = groups_data.get(institute, {}).get(year, [])
     buttons = []
@@ -169,9 +169,8 @@ def get_subgroups_menu(group: str = None, context: str = None) -> InlineKeyboard
     else:
         # Получаем доступные подгруппы для группы
         try:
-            with open("data/schedule.json", "r", encoding="utf-8") as f:
-                schedule = json.load(f)
-                subgroups = list(schedule.get(group, {}).keys()) or ["1", "2"]
+            schedule = loadData("schedule")
+            subgroups = list(schedule.get(group, {}).keys()) or ["1", "2"]
         except:
             subgroups = ["1", "2"]
     

@@ -1,12 +1,12 @@
 import asyncio
 from datetime import datetime
-import json
 import logging
 from aiogram import Bot, Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 from typing import Dict, Optional, Union
 
+from handlers.loader import loadData
 from handlers.keyboards import get_weekday_buttons
 from handlers.study.common import get_day
 from handlers.study.current_schedule import get_schedule
@@ -170,8 +170,7 @@ async def show_group_schedule(call: CallbackQuery, group: str, subgroup: str):
         today = get_day()
         current_week = "upper" if (datetime.today().isocalendar()[1] % 2) != 0 else "lower"
         
-        with open("data/schedule.json", "r", encoding="utf-8") as f:
-            schedule_data = json.load(f)
+        schedule_data = loadData("schedule")
         
         response = get_schedule(group, subgroup, current_week, today, schedule_data)
         

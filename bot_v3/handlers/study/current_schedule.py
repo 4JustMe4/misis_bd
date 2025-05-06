@@ -6,6 +6,7 @@ import json
 import random
 from datetime import datetime, timedelta
 
+from handlers.loader import loadData
 from handlers.user_profile.profile_keyboards import get_profile_keyboard
 from handlers.user_profile.profile_utils import load_user_profile
 
@@ -24,7 +25,7 @@ router = Router()
 async def today_schedule(message: Message):
     today = get_day()
     current_week = "upper" if (datetime.today().isocalendar()[1] % 2) != 0 else "lower"
-
+    user_id = message.from_user.id
     user_profile = load_user_profile(message.from_user.id)
 
     #Вывод расписания на текущий день.#
@@ -39,10 +40,9 @@ async def today_schedule(message: Message):
     group = user_profile["main_group"]
     subgroup = user_profile["subgroup"]
 
-    with open("data/schedule.json", "r", encoding="utf-8") as file:
-        schedule = json.load(file)
+    schedule = loadData("schedule")
 
-    response = get_schedule(group, subgroup, current_week, today, schedule)
+    response = get_schedule_new(user_id, group, subgroup, current_week, today, schedule)
 
     await message.answer(response, parse_mode='HTML')
 
@@ -51,7 +51,7 @@ async def today_schedule(message: Message):
 async def today_schedule(message: Message):
     tomorrow = get_tomorrow()
     current_week = "upper" if ((datetime.today()+timedelta(days=1)).isocalendar()[1] % 2) != 0 else "lower"
-
+    user_id = message.from_user.id
     user_profile = load_user_profile(message.from_user.id)
 
     #Вывод расписания на текущий день.#
@@ -66,10 +66,9 @@ async def today_schedule(message: Message):
     group = user_profile["main_group"]
     subgroup = user_profile["subgroup"]
 
-    with open("data/schedule.json", "r", encoding="utf-8") as file:
-        schedule = json.load(file)
+    schedule = loadData("schedule")
 
-    response = get_schedule_next(group, subgroup, current_week, tomorrow, schedule)
+    response = get_schedule_next(user_id, group, subgroup, current_week, tomorrow, schedule)
 
     await message.answer(response, parse_mode='HTML')
 
@@ -79,7 +78,7 @@ async def today_schedule(message: Message):
 async def my_schedule(message: Message):
     today = get_day()
     current_week = "upper" if (datetime.today().isocalendar()[1] % 2) != 0 else "lower"
-
+    user_id = message.from_user.id
     user_profile = load_user_profile(message.from_user.id)
 
     #Отображение расписания для группы пользователя с плавающими кнопками.#
@@ -94,10 +93,9 @@ async def my_schedule(message: Message):
     group = user_profile["main_group"]
     subgroup = user_profile["subgroup"]
 
-    with open("data/schedule.json", "r", encoding="utf-8") as file:
-        schedule = json.load(file)
+    schedule = loadData("schedule")
 
-    response = get_schedule(group, subgroup, current_week, today, schedule)
+    response = get_schedule_new(user_id, group, subgroup, current_week, today, schedule)
 
     await message.answer(response, reply_markup=get_weekday_buttons(), parse_mode='HTML')
 
@@ -109,6 +107,7 @@ async def weekday_callback(call: types.CallbackQuery):
     try:
         # 1. Загружаем актуальный профиль пользователя
         profile = load_user_profile(call.from_user.id)
+        user_id = call.from_user.id
         
         # 2. Определяем группу и подгруппу (в порядке приоритета):
         #    - Из метаданных сообщения
@@ -148,14 +147,13 @@ async def weekday_callback(call: types.CallbackQuery):
         day = days_mapping.get(day_part.capitalize(), "Неизвестный день")
 
         # 4. Загружаем расписание
-        with open("data/schedule.json", "r", encoding="utf-8") as file:
-            schedule = json.load(file)
+        schedule = loadData("schedule")
 
         # 5. Формируем ответ с ЯВНЫМ указанием группы
         response = (
             f"<b>Расписание {group} {subgroup}</b>\n"
             f"{day}, {'верхняя' if week == 'upper' else 'нижняя'} неделя:\n\n"
-            f"{get_schedule(group, subgroup, week, day, schedule)}"
+            f"{get_schedule_new(user_id, group, subgroup, week, day, schedule)}"
         )
 
         # 6. Обновляем сообщение
@@ -182,6 +180,128 @@ async def weekday_callback(call: types.CallbackQuery):
 
 
 # Вспомогательные функции
+# Загружаем пользователей и группы по английскому
+with open("data/users.json", encoding="utf-8") as f:
+    USERS = json.load(f)
+
+with open("data/english_groups.json", encoding="utf-8") as f:
+    ENGLISH_GROUPS = json.load(f)
+
+def get_schedule_new(user_id, group, subgroup, week_type, day, schedule):
+    today = get_day()
+
+    # Получаем данные пользователя
+    user = USERS.get(str(user_id), {})
+    english_group = user.get("english_group")
+    user_subgroup = user.get("subgroup", subgroup)  # используем из users.json или переданное
+
+    # Получаем кабинет английского, если данные есть
+    english_room = None
+    if english_group and english_group in ENGLISH_GROUPS:
+        english_room = ENGLISH_GROUPS[english_group].get(week_type, {}).get(user_subgroup)
+
+    if group not in schedule:
+        return "Расписание не найдено 🤔\n"
+
+    if subgroup != "all" and subgroup not in schedule[group]:
+        subgroup = "all"
+
+    response = f"<b>Расписание {group}</b>\n"
+    response += f"{day}, {'верхняя' if week_type == 'upper' else 'нижняя'} неделя:\n\n"
+
+    times = {
+        "1": "9:00 — 10:35",
+        "2": "10:50 — 12:25",
+        "3": "12:40 — 14:15",
+        "4": "14:30 — 16:05",
+        "5": "16:20 — 17:55",
+        "6": "18:00 — 19:25",
+        "7": "19:35 — 21:00"
+    }
+
+    if subgroup == "all":
+        pairs = {}
+        for sub in schedule[group]:
+            if day not in schedule[group][sub]:
+                continue
+
+            for pair_num, pair_data in schedule[group][sub][day].items():
+                week_data = pair_data.get(week_type, {"subject": "", "place": ""})
+                subject = week_data["subject"].rstrip()
+                place = week_data["place"]
+
+                # Подмена кабинета для английского языка
+                if (
+                    subject.startswith("Иностранный язык")
+                    and place == "Каф. ИЯКТ"
+                    and english_room
+                ):
+                    place = english_room
+
+                if not subject and not place:
+                    continue
+
+                key = (pair_num, subject, place)
+                if key not in pairs:
+                    pairs[key] = set()
+                pairs[key].add(sub)
+
+        if pairs:
+            for (pair_num, subject, place), subgroups in sorted(pairs.items()):
+                response += (
+                    f"{pair_num} пара ({times.get(pair_num, 'неизвестное время')})\n"
+                    f"<b>{subject}</b>\n"
+                    f"{group} [{', '.join(subgroups)}]\n"
+                    f"{place}\n\n"
+                )
+        else:
+            response += "На этот день занятий нет 🥳\n"
+    else:
+        if day not in schedule[group][subgroup]:
+            return "На этот день занятий нет 🥳\n"
+
+        pairs = []
+        for pair_num, pair_data in schedule[group][subgroup][day].items():
+            week_data = pair_data.get(week_type, {"subject": "", "place": ""})
+            subject = week_data["subject"]
+            place = week_data["place"]
+
+            # Подмена кабинета для английского языка
+            if (
+                subject.startswith("Иностранный язык")
+                and place == "Каф. ИЯКТ"
+                and english_room
+            ):
+                place = english_room
+
+            if not subject and not place:
+                continue
+
+            pairs.append({
+                "num": pair_num,
+                "time": times.get(pair_num, "неизвестное время"),
+                "subject": subject,
+                "place": place
+            })
+
+        if pairs:
+            for pair in pairs:
+                response += (
+                    f"{pair['num']} пара ({pair['time']})\n"
+                    f"<b>{pair['subject']}</b>\n"
+                    f"{pair['place']}\n\n"
+                )
+        else:
+            response += "На этот день занятий нет 🥳\n"
+
+    response += f"Сегодня {today}, {'верхняя' if week_type == 'upper' else 'нижняя'} неделя\n"
+    invisible_separator = "\u2063"
+    metadata = f"{invisible_separator}{group}{invisible_separator}[{subgroup}]{invisible_separator}"
+    return add_invisible_chars(response + metadata)
+
+
+
+
 # --- Функция для получения расписания ---
 def get_schedule(group, subgroup, week_type, day, schedule):
     today = get_day()
@@ -269,17 +389,25 @@ def get_schedule(group, subgroup, week_type, day, schedule):
     return add_invisible_chars(response + metadata)
 
 
-def get_schedule_next(group, subgroup, week_type, day, schedule):
+def get_schedule_next(user_id, group, subgroup, week_type, day, schedule):
     today = get_tomorrow()
-    
-    #Получает расписание для указанной группы, подгруппы (или всех подгрупп), недели (upper/lower) и дня.#
+
+    # Получаем данные пользователя
+    user = USERS.get(str(user_id), {})
+    english_group = user.get("english_group")
+    user_subgroup = user.get("subgroup", subgroup)
+
+    # Получаем кабинет английского, если есть
+    english_room = None
+    if english_group and english_group in ENGLISH_GROUPS:
+        english_room = ENGLISH_GROUPS[english_group].get(week_type, {}).get(user_subgroup)
+
     if group not in schedule:
         return "Расписание не найдено 🤔\n"
-    
-    # Если выбрана конкретная подгруппа, но её нет в расписании - показываем все подгруппы
+
     if subgroup != "all" and subgroup not in schedule[group]:
         subgroup = "all"
-    
+
     response = f"<b>Расписание {group}</b>\n"
     response += f"{day}, {'верхняя' if week_type == 'upper' else 'нижняя'} неделя:\n\n"
 
@@ -301,11 +429,21 @@ def get_schedule_next(group, subgroup, week_type, day, schedule):
 
             for pair_num, pair_data in schedule[group][sub][day].items():
                 week_data = pair_data.get(week_type, {"subject": "", "place": ""})
-                
-                if not week_data["subject"] and not week_data["place"]:
+                subject = week_data["subject"]
+                place = week_data["place"]
+
+                # Подмена кабинета, если это английский
+                if (
+                    subject.startswith("Иностранный язык")
+                    and place == "Каф. ИЯКТ"
+                    and english_room
+                ):
+                    place = english_room
+
+                if not subject and not place:
                     continue
 
-                key = (pair_num, week_data["subject"], week_data["place"])
+                key = (pair_num, subject, place)
                 if key not in pairs:
                     pairs[key] = set()
                 pairs[key].add(sub)
@@ -327,15 +465,25 @@ def get_schedule_next(group, subgroup, week_type, day, schedule):
         pairs = []
         for pair_num, pair_data in schedule[group][subgroup][day].items():
             week_data = pair_data.get(week_type, {"subject": "", "place": ""})
-            
-            if not week_data["subject"] and not week_data["place"]:
+            subject = week_data["subject"].rstrip()
+            place = week_data["place"]
+
+            # Подмена кабинета для английского языка
+            if (
+                subject.startswith("Иностранный язык")
+                and place == "Каф. ИЯКТ"
+                and english_room
+            ):
+                place = english_room
+
+            if not subject and not place:
                 continue
 
             pairs.append({
                 "num": pair_num,
                 "time": times.get(pair_num, "неизвестное время"),
-                "subject": week_data["subject"],
-                "place": week_data["place"]
+                "subject": subject,
+                "place": place
             })
 
         if pairs:
@@ -349,10 +497,10 @@ def get_schedule_next(group, subgroup, week_type, day, schedule):
             response += "На этот день занятий нет 🥳\n"
 
     response += f"Завтра {today}, {'верхняя' if week_type == 'upper' else 'нижняя'} неделя\n"
-    # Добавляем метаданные в виде невидимых символов
-    invisible_separator = "\u2063"  # Невидимый разделитель
+    invisible_separator = "\u2063"
     metadata = f"{invisible_separator}{group}{invisible_separator}[{subgroup}]{invisible_separator}"
     return add_invisible_chars(response + metadata)
+
 
 
 

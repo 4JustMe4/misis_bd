@@ -8,6 +8,8 @@ from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
+from handlers.loader import loadData
+
 # Создаем роутер
 router = Router()
 
@@ -20,18 +22,15 @@ class SessionStates(StatesGroup):
 # --- Вспомогательные функции ---
 def load_users_data() -> Dict:
     """Загружает данные пользователей"""
-    with open("data/users.json", "r", encoding="utf-8") as f:
-        return json.load(f)
+    return loadData("users")
 
 def load_session_data() -> Dict:
     """Загружает данные сессии"""
-    with open("data/session.json", "r", encoding="utf-8") as f:
-        return json.load(f)
+    return loadData("session")
 
 def load_groups_data() -> Dict:
     """Загружает данные групп"""
-    with open("data/groups.json", "r", encoding="utf-8") as f:
-        return json.load(f)
+    return loadData("groups")
 
 def get_user_main_group(user_id: str) -> Optional[str]:
     """Получает основную группу пользователя"""
@@ -56,9 +55,7 @@ def format_exam_day(date: str, exams: Dict) -> str:
     return f"📅 <b>{date}</b>\n" + "\n\n".join(parts) + "\n"
 
 def get_session_schedule(group_name: str, session_path: str = "data/session.json") -> str:
-    with open(session_path, 'r', encoding='utf-8') as file:
-        data = json.load(file)
-        raise Exception(os.getcwd())
+    data = loadData("session")
     
     if group_name not in data:
         return f"❌ Расписание сессии для группы {group_name} не найдено."

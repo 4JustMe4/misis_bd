@@ -2,20 +2,22 @@ import json
 import logging
 import re
 from typing import Dict, Union
+from pathlib import Path
 from aiogram import Bot
 from aiogram.types import CallbackQuery, Message
 from aiogram.exceptions import TelegramBadRequest
 
+from handlers.loader import loadData
+
 
 def load_user_profile(user_id: int) -> Dict:
     try:
-        with open("data/users.json", "r", encoding="utf-8") as f:
-            return json.load(f).get(str(user_id), {
-                "main_group": None,
-                "subgroup": "all",
-                "english_group": None,
-                "saved_groups": []
-            })
+        return loadData("users").get(str(user_id), {
+            "main_group": None,
+            "subgroup": "all",
+            "english_group": None,
+            "saved_groups": []
+        })
     except (FileNotFoundError, json.JSONDecodeError):
         return {
             "main_group": None,
@@ -24,9 +26,6 @@ def load_user_profile(user_id: int) -> Dict:
             "saved_groups": []
         }
 
-import json
-from typing import Dict
-from pathlib import Path
 
 def save_user_profile(user_id: int, profile: Dict):
     """Гарантированно сохраняет профиль пользователя"""
@@ -36,8 +35,7 @@ def save_user_profile(user_id: int, profile: Dict):
         
         # Загружаем текущие данные
         try:
-            with open("data/users.json", "r+", encoding="utf-8") as f:
-                users = json.load(f)
+            users = loadData("users")
         except (FileNotFoundError, json.JSONDecodeError):
             users = {}
         
@@ -77,17 +75,15 @@ def save_user_profile(user_id: int, profile: Dict):
     # Проверка что данные действительно сохранились
     def verify_profile_saved(user_id: int, expected_group: str) -> bool:
         try:
-            with open("data/users.json", "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data.get(str(user_id), {}).get("main_group") == expected_group
+            data = loadData("users")
+            return data.get(str(user_id), {}).get("main_group") == expected_group
         except:
             return False
     
 
 def validate_english_group(group_num: str) -> bool:
     try:
-        with open("data/english_groups.json", "r", encoding="utf-8") as f:
-            return group_num in json.load(f)
+        return group_num in loadData("english_groups")
     except (FileNotFoundError, json.JSONDecodeError):
         return False
     
@@ -96,8 +92,7 @@ def validate_english_group(group_num: str) -> bool:
 def get_subgroups_for_group(group: str) -> list:
     """Возвращает список доступных подгрупп для указанной группы"""
     try:
-        with open("data/schedule.json", "r", encoding="utf-8") as f:
-            schedule = json.load(f)
+        schedule = loadData("schedule")
         
         if group not in schedule:
             return ["1", "2"]  # Значения по умолчанию
