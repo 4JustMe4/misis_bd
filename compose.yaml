@@ -31,6 +31,7 @@ services:
     healthcheck:
       test: redis-cli ping
       <<: *healthcheck-params
+    command: redis-server --requirepass \$REDIS_PASSWORD --loadmodule /opt/redis-stack/lib/rejson.so
     #depends_on:
     #  initscript:
     #    condition: service_completed_successfully
@@ -93,14 +94,12 @@ services:
     # local image
     image: @tgbot_imageid@
     restart: always
-    <<: *db-depends
-    <<: *env-file
+    <<: [*db-depends, *env-file]
     # BOT_TOKEN
 
   dbupdater:
     image: @tgbot_imageid@
-    <<: *db-depends
-    <<: *env-file
+    <<: [*db-depends, *env-file]
     working_dir: /bot_parser
     command: sh -c 'while true; do python3 update.py; sleep 3600; done'
 

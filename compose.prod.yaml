@@ -23,5 +23,7 @@ services:
       - "${HOST_MONGO_PORT}:27017"
   tgbot:
     <<: *env-file
+  dbupdater:
+    <<: *env-file
 
 # docker-compose --env-file prod.env -f compose.yaml -f compose.prod.yaml

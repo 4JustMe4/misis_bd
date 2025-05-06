@@ -5,7 +5,6 @@ from formatted_logger import getFormattedLogger
 from setup_env import setupMongoEnv
 
 MongoLog = getFormattedLogger("mongo")
-TABLE_NAME = 'schedule'
 setupMongoEnv()
 
 def getCollection():
@@ -15,11 +14,12 @@ def getCollection():
         return None
     username = os.environ['MONGO_INITDB_ROOT_USERNAME']
     password = os.environ['MONGO_INITDB_ROOT_PASSWORD']
+    dbname = os.environ['MONGO_INITDB_DATABASE']
     port = os.environ['BOT_MONGO_PORT']
     host = os.environ['BOT_MONGO_HOSTNAME']
-    url = f'mongodb://{username}:{password}@{host}:{port}/{TABLE_NAME}'
+    url = f'mongodb://{username}:{password}@{host}:{port}/'
     client = pymongo.MongoClient(url)
-    db = client[TABLE_NAME]
+    db = client[dbname]
     collection = db['schedule']
     return collection
 
