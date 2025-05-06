@@ -10,6 +10,9 @@ setupMongoEnv()
 
 def getCollection():
     MongoLog.info(f"Try to connect with monga")
+    if os.environ.get('IGNORE_MONGO_PLS') == "yes":
+        MongoLog.warning(f"Connection will be not created due to IGNORE_MONGO_PLS=yes in envvars")
+        return None
     username = os.environ['MONGO_INITDB_ROOT_USERNAME']
     password = os.environ['MONGO_INITDB_ROOT_PASSWORD']
     url = f'mongodb://{username}:{password}@localhost:27017/{TABLE_NAME}'
