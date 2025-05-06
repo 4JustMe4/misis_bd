@@ -105,7 +105,7 @@
         '';
       };
 
-      botImage = ({ lib, stdenvNoCC, dockerTools, buildEnv, python312, ...}@pkgs: let
+      botImage = ({ lib, stdenvNoCC, dockerTools, buildEnv, python312, busybox, ...}@pkgs: let
         lastModifyDate = lib.substring 0 8 self.lastModifiedDate;
         lastModifyTime = lib.substring 8 14 self.lastModifiedDate;
         tagPart2 = lib.substring 0 8 (self.rev or lastModifyTime);
@@ -121,6 +121,7 @@
 
           maxLayers = 16;
           contents = [
+            busybox
             dockerTools.binSh
             #dockerTools.usrBinEnv
             (pythonFiles pkgs)
