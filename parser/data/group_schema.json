@@ -1,6 +1,6 @@
 // collection group:
 {
-    "json_name": "schedule", // Имя для удобного update
+    "json_name": "group", // Имя для удобного update
     "data" : { // Расписание
         "ББИ-21-1" : { // Номер группы
             "1": { // Номер подгруппы
