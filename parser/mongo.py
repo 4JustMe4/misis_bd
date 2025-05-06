@@ -7,7 +7,7 @@ from setup_env import setupMongoEnv
 MongoLog = getFormattedLogger("mongo")
 setupMongoEnv()
 
-def getCollection():
+def getCollection(name):
     MongoLog.info(f"Try to connect with monga")
     if os.environ.get('IGNORE_MONGO_PLS') == "yes":
         MongoLog.warning(f"Connection will be not created due to IGNORE_MONGO_PLS=yes in envvars")
@@ -20,20 +20,20 @@ def getCollection():
     url = f'mongodb://{username}:{password}@{host}:{port}/'
     client = pymongo.MongoClient(url)
     db = client[dbname]
-    collection = db['schedule']
+    collection = db[name]
     return collection
 
 
 def updateMongo(schedule, session, location, teacher):
     MongoLog.info(f"Try to update monga")
     try:
-        collection = getCollection()
         for name, json in [
             ({"json_name": "schedule"}, schedule),
             ({"json_name": "session"}, session),
             ({"json_name": "location"}, location),
             ({"json_name": "teacher"}, teacher),
             ]:
+            collection = getCollection(name["json_name"])
             MongoLog.info(f"Processing {name}")
             result = collection.update_one(name, {"$set": {"data": json, **name }}, upsert=True)
             MongoLog.info(f"The result of updating is {result}")
@@ -46,7 +46,7 @@ def loadJsonFromMongo(name):
     MongoLog.info(f"Try to load {name} from mongo")
     try:
         query = {"json_name": f"{name}"}
-        collection = getCollection()
+        collection = getCollection(name)
         record = collection.find_one(query)
         if record:
             MongoLog.info(f"Info for {name} was found in mongo")
