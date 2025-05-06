@@ -25,6 +25,7 @@ def setupMongoEnv():
 
         os.environ['MONGO_INITDB_ROOT_USERNAME'] = 'bot'
         os.environ['MONGO_INITDB_ROOT_PASSWORD'] = '12345678'
+        os.environ['MONGO_INITDB_DATABASE'] = 'schedule'
         os.environ['BOT_MONGO_PORT'] = '27017'
         os.environ['BOT_MONGO_HOSTNAME'] = 'localhost'
     else:
