@@ -2,12 +2,12 @@ import json
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'parser')))
-from mongo import loadJsonFromMongo
+from api import loadJson
 
 
 
 def loadData(name):
-    data = loadJsonFromMongo(name)
+    data = loadJson(name)
     if data is not None:
         return data
     else:
