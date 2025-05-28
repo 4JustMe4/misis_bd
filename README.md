@@ -18,7 +18,7 @@
 nix build git+file:/path/to/cloned/repo#dockerImages.x86_64-linux.compressed_nodb
 ```
 - Для сборки склонированного репозитория, включая локальные незакоммиченные модификации:
-> [!NOTE] В данном случае для docker-образа бота будет использован тег "YYMMDD-HHmmss" вместо "YYMMDD-<short-commit>"
+> В данном случае для docker-образа бота будет использован тег "YYMMDD-HHmmss" вместо "YYMMDD-<short-commit>"
 ```nix
 nix build path:/path/to/repo#dockerImages.x86_64-linux#compressed_nodb
 ```
