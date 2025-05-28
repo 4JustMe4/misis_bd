@@ -102,6 +102,7 @@
           mkdir -p $out/tgbot
           cp -Tr $src/bot_v3 $out/tgbot/bot
           cp -Tr $src/parser $out/tgbot/parser
+          touch $out/tgbot/__init__.py
         '';
       };
 

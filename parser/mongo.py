@@ -1,8 +1,8 @@
 import os
 import pymongo
 
-from formatted_logger import getFormattedLogger
-from setup_env import setupMongoEnv
+from .formatted_logger import getFormattedLogger
+from .setup_env import setupMongoEnv
 
 MongoLog = getFormattedLogger("mongo")
 setupMongoEnv()
