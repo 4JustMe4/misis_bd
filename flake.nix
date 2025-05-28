@@ -99,9 +99,9 @@
         name = "tgbot-files";
         src = self;
         installPhase = ''
-          mkdir -p $out
-          cp -Tr $src/bot_v3 $out/bot_srv
-          cp -Tr $src/parser $out/bot_parser
+          mkdir -p $out/tgbot
+          cp -Tr $src/bot_v3 $out/tgbot/bot
+          cp -Tr $src/parser $out/tgbot/parser
         '';
       };
 
@@ -136,7 +136,7 @@
 
           config = {
             Cmd = [ "/bin/python3" "./main.py" ];
-            WorkingDir = "/bot_srv";
+            WorkingDir = "/tgbot/bot";
             #Volumes = { "/data" = { }; };
           };
 
@@ -190,6 +190,7 @@
           postgres_imageid  = toURI postgres;
           mongo_imageid     = toURI mongo;
           tgbot_imageid     = toURInoDigest tgbot;
+          dbupdater_workdir = "/tgbot/parser";
         };
       };
       composed = composed_nodb.overrideAttrs (a: a // {

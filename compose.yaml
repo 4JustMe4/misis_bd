@@ -100,7 +100,7 @@ services:
   dbupdater:
     image: @tgbot_imageid@
     <<: [*db-depends, *env-file]
-    working_dir: /bot_parser
+    working_dir: @dbupdater_workdir@
     command: sh -c 'while true; do python3 update.py; sleep 3600; done'
 
   initscript:
