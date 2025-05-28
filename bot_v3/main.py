@@ -42,7 +42,7 @@ async def set_bot_commands(bot: Bot):
 async def cmd_start(message: Message):
     menu_stack.clear()
     await message.answer(
-        "Привет! Я бот расписания МИСиС.\n"
+        "Привет! Я бот расписания МИСИС.\n"
         "Используй команду /profile для настройки своего профиля.",
         reply_markup=get_main_menu()
     )
